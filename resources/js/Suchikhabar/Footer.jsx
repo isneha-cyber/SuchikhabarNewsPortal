@@ -33,16 +33,16 @@ const SOCIAL_LINKS = [
     ),
   },
   {
-    href: '#',
-    label: 'TikTok',
+    href: 'https://twitter.com/shuchikhabar',
+    label: 'Twitter',
     icon: (
       <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16">
-        <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.5 2.89 2.89 0 0 1-2.89-2.89 2.89 2.89 0 0 1 2.89-2.89c.28 0 .54.04.79.1V9.01a6.33 6.33 0 0 0-.79-.05 6.34 6.34 0 0 0-6.34 6.34 6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.33-6.34V8.69a8.18 8.18 0 0 0 4.78 1.52V6.75a4.85 4.85 0 0 1-1.01-.06z" />
+        <path d="M23 3a10.9 10.9 0 0 1-3.14 1.53 4.48 4.48 0 0 0-7.86 3v1A10.66 10.66 0 0 1 3 4s-4 9 5 13a11.64 11.64 0 0 1-7 2c9 5 20 0 20-11.5a4.5 4.5 0 0 0-.08-.83A7.72 7.72 0 0 0 23 3z" />
       </svg>
     ),
   },
   {
-    href: '#',
+    href: 'https://www.youtube.com/channel/UCUtukCXV6yPNCmtVlo3Emxg',
     label: 'YouTube',
     icon: (
       <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16">
@@ -51,7 +51,7 @@ const SOCIAL_LINKS = [
     ),
   },
   {
-    href: '#',
+    href: 'https://www.instagram.com/shuchikhabar/',
     label: 'Instagram',
     icon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="16" height="16">
@@ -104,43 +104,40 @@ const Footer = () => (
 
     {/* ── MIDDLE: 3-column info grid ── */}
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 border-b border-white/15">
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 lg:gap-16">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 lg:gap-16">
 
-        {/* ── Col 1: About ── */}
+        {/* ── Col 1: About with Registration Details ── */}
         <div className="flex flex-col">
-          {/* Logo — fixed size, white bg pill */}
-          <div className="mb-5 inline-flex">
-            <div className="bg-white px-2 py-1inline-flex items-center justify-center"
-                 style={{ width: 190, height: 52 }}>
+          {/* Logo */}
+          <div className="mb-5">
+            <div className="inline-block bg-white p-2">
               <img
                 src="/images/logo.png"
                 alt="Shuchikhabar"
-                style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+                className="w-[200px] h-auto"
               />
             </div>
           </div>
 
           <SectionHeading>हाम्रो बारेमा</SectionHeading>
 
-          <p className="text-[0.84rem] text-white/65 leading-[1.8] flex-1">
+          <p className="text-[0.84rem] text-white/65 leading-[1.8] mb-4">
             शुचीखबर नेपालको एक विश्वसनीय अनलाइन समाचार पोर्टल हो। यो पोर्टलले नेपाली भाषामा
             राजनीति, अर्थतन्त्र, खेलकुद, मनोरञ्जन, कृषि, स्वास्थ्य लगायत विभिन्न क्षेत्रका
             ताजा समाचार र विश्लेषण प्रदान गर्दछ।
           </p>
 
-          {/* Stats row — fills the empty space naturally */}
-          <div className="mt-5 grid grid-cols-3 gap-2 border-t border-white/10 pt-5">
-            {[
-              { num: '१२+', label: 'वर्षदेखि' },
-              { num: '५०क+', label: 'पाठकहरू' },
-              { num: '२४/७', label: 'समाचार' },
-            ].map(stat => (
-              <div key={stat.label} className="text-center">
-                <div className="text-[1.1rem] font-bold text-white leading-tight">{stat.num}</div>
-                <div className="text-[0.7rem] text-white/45 mt-0.5">{stat.label}</div>
-              </div>
-            ))}
+          {/* Registration Details - Added from your HTML */}
+          <div className="mt-2 space-y-1">
+            <p className="text-[0.85rem] text-white/80 font-medium">
+              सूचना विभाग दर्ता नं.: २०७८/०७७-७८
+            </p>
+            <p className="text-[0.85rem] text-white/80">
+              प्रकाशक: शुचि मिडिया एण्ड इभेन्ट प्रा. लि.
+            </p>
           </div>
+
+         
         </div>
 
         {/* ── Col 2: Useful Links + Social ── */}
@@ -161,7 +158,7 @@ const Footer = () => (
             ))}
           </ul>
 
-          {/* Social icons */}
+          {/* Social icons - Alternative style if needed */}
           <div className="mt-auto">
             <p className="text-[0.75rem] text-white/40 uppercase tracking-widest mb-3 font-medium">
               सामाजिक सञ्जाल
@@ -208,7 +205,7 @@ const Footer = () => (
               info@shuchikhabar.com
             </a>
             <a
-              href="http://shuchikhabar.com"
+              href="https://shuchikhabar.com"
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center gap-2.5 text-[0.84rem] text-white/70 hover:text-white transition-colors duration-150 group"
@@ -238,7 +235,7 @@ const Footer = () => (
               <img
                 src="/images/sait.gif"
                 alt="SAIT"
-                style={{ height: 28, width: 'auto', objectFit: 'contain' }}
+                className="h-7 w-auto object-contain"
                 onError={e => {
                   e.currentTarget.style.display = 'none';
                   e.currentTarget.nextSibling.style.display = 'flex';
@@ -260,9 +257,9 @@ const Footer = () => (
     {/* ── BOTTOM: copyright bar ── */}
     <div style={{ background: 'rgba(0,0,0,0.22)' }}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-2">
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-2 text-center sm:text-left">
           <p className="text-[0.8rem] text-white">
-            ©२०२६ shuchikhabar.com — सर्वाधिकार सुरक्षित
+            © {new Date().getFullYear()} shuchikhabar.com — सर्वाधिकार सुरक्षित
           </p>
           <div className="flex items-center gap-1.5 text-[0.8rem] text-white">
             <span>Crafted by :</span>
