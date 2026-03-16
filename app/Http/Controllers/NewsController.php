@@ -16,14 +16,22 @@ class NewsController extends Controller
     /**
      * Display a listing of the resource.
      */
-  public function index(Request $request)
+ public function index(Request $request)
 {
-    $news = News::latest()->paginate(10);
-
+    $query = News::latest();
+ 
+    // Filter by category if provided: /ournews?category=राजनीति
+    if ($request->filled('category')) {
+        $query->where('category', $request->category);
+    }
+ 
+    $perPage = $request->get('per_page', 10);
+    $news = $query->paginate($perPage);
+ 
     return response()->json([
-        'status' => true,
+        'status'  => true,
         'message' => 'News fetched successfully',
-        'data' => $news,
+        'data'    => $news,
     ]);
 }
 
@@ -212,6 +220,97 @@ class NewsController extends Controller
         "categoryNews"   => $categoryNews,
         "categoryBanners"=> $categoryBanners,
         "latestNews"     => $latestNews,
+    ]);
+}
+
+// Add this method to your NewsController.php
+
+public function getCategorizedNews()
+{
+    // Get all distinct categories that have news
+    $categories = News::select('category')
+        ->whereNotNull('category') // Exclude null categories
+        ->distinct()
+        ->pluck('category')
+        ->take(5); // Take only first 5 categories
+    
+    $categorizedNews = [];
+    
+    foreach ($categories as $category) {
+        // Get latest 4 news for each category (1 featured + 3 list items)
+        $news = News::where('category', $category)
+            ->latest('published_at') // Order by published date
+            ->take(4)
+            ->get(['id', 'heading as title', 'image', 'published_at', 'slug']);
+        
+        // Format the news items
+        $formattedNews = $news->map(function ($item) {
+            return [
+                'id' => $item->id,
+                'title' => $item->title,
+                'image' => $item->image ? asset('storage/' . $item->image) : 'https://via.placeholder.com/500x300?text=No+Image',
+                'time' => $item->published_at ? Carbon::parse($item->published_at)->diffForHumans() : 'भर्खरै',
+                'slug' => $item->slug,
+            ];
+        });
+        
+        $categorizedNews[] = [
+            'name' => $category,
+            'color' => $this->getCategoryColor($category),
+            'route' => '/category/' . urlencode($category),
+            'news' => $formattedNews,
+        ];
+    }
+    
+    return response()->json([
+        'status' => true,
+        'data' => $categorizedNews
+    ]);
+}
+
+// Helper method to assign colors to categories
+private function getCategoryColor($category)
+{
+    $colors = [
+        'राजनीति' => '#8B0000',
+        'अर्थतन्त्र' => '#1a6b3c',
+        'खेलकुद' => '#b8860b',
+        'अन्तर्राष्ट्रिय' => '#00649b',
+        'समाज' => '#6b3a8c',
+        'मनोरञ्जन' => '#c44569',
+        'प्रविधि' => '#2c3e50',
+        'शिक्षा' => '#16a085',
+        'स्वास्थ्य' => '#c0392b',
+    ];
+    
+    return $colors[$category] ?? '#808080'; // Default gray if category not found
+}
+
+    public function getLatestFeatured()
+{
+    $latest = News::latest()->first();
+    
+    if (!$latest) {
+        return response()->json([
+            'status' => false,
+            'message' => 'No news found'
+        ]);
+    }
+    
+    return response()->json([
+        'status' => true,
+        'data' => [
+            'id' => $latest->id,
+            'slug' => $latest->slug,
+            'heading' => $latest->heading,
+            'blog_by' => $latest->blog_by,
+            'description' => $latest->description,
+            'image' => $latest->image,
+            'category' => $latest->category,
+            'published_at' => $latest->published_at,
+            'created_at' => $latest->created_at,
+            'views' => $latest->views,
+        ]
     ]);
 }
 }

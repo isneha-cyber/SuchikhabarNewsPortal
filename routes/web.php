@@ -2,13 +2,12 @@
 
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\NewsController;
-use App\Http\Controllers\TeamsController;
+use App\Http\Controllers\TeamController;
 use App\Http\Controllers\BannerController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\HeadingController;
 use App\Http\Controllers\LogController;
-
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -89,7 +88,7 @@ Route::middleware('auth')->group(function () {
     Route::delete('/headings/{id}', [HeadingController::class, 'destroy'])->name('headings.destroy');
     
     
-    Route::get('/category/{slug}',[CategoryController::class,'showDetails'])->name('ourcategory.showDetails');
+ 
 
     Route::get('/news/{slug}', [NewsController::class, 'newsShow'])->name('news.show');
 });
@@ -104,12 +103,23 @@ Route::get('/team', [TeamController::class, 'index'])->name('team.index');
 Route::get('/category', function () {
     return Inertia::render('CategoryPage');
 });
+
+
+   Route::get('/category/{slug}',[CategoryController::class,'showDetails'])->name('ourcategory.showDetails');
+
  Route::get('/detail',function(){
         return Inertia::render('NewsDetailPage');
     });
+    
 
-   
+   Route::get('/categorized-news', [NewsController::class, 'getCategorizedNews'])->name('news.categorized');
+   Route::get('/latest-featured', [NewsController::class, 'getLatestFeatured'])->name('news.latestFeatured');
 
-
+Route::get('/hamro-team', function () {
+    return Inertia::render('HamroTeam');
+});
+Route::get('/privacy-policy', function () {
+    return Inertia::render('Privacy');
+});
 
 require __DIR__.'/auth.php';

@@ -1,13 +1,9 @@
-import React from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { Link, Head } from '@inertiajs/react';
-import BannerStrip from '@/Ads/BannerStrip';
 import Navbar from '@/Suchikhabar/Navbar';
 import Footer from '@/Suchikhabar/Footer';
-
-// ── Banner components (each self-contained, fetches its own data) ─────────────
-import LeaderboardBanner from '@/Ads/LeaderboardBanner'; // Rectangle → top strip
-import SidebarBanner     from '@/Ads/SidebarBanner';     // Square    → right sidebar
-
+import LeaderboardBanner from '@/Ads/LeaderboardBanner';
+import SidebarBanner     from '@/Ads/SidebarBanner';
 
 // ─── ICONS ────────────────────────────────────────────────────────────────────
 const ClockIcon = () => (
@@ -197,16 +193,13 @@ const Pagination = ({ links, color }) => {
   );
 
   return (
-    
     <div className="flex items-center justify-center gap-1 pt-4 pb-2 flex-wrap">
       {firstPage?.url && !firstPage?.active
         ? <NavLink href={firstPage.url} label="« पहिलो" />
         : <NavDisabled label="« पहिलो" />}
-
       {prevLink?.url
         ? <NavLink href={prevLink.url} label="‹ अघिल्लो" />
         : <NavDisabled label="‹ अघिल्लो" />}
-
       {pageLinks.map((link, i) =>
         link.url ? (
           <Link key={i} href={link.url}
@@ -219,11 +212,9 @@ const Pagination = ({ links, color }) => {
                 dangerouslySetInnerHTML={{ __html: link.label }} />
         )
       )}
-
       {nextLink?.url
         ? <NavLink href={nextLink.url} label="अर्को ›" />
         : <NavDisabled label="अर्को ›" />}
-
       {lastPage?.url && !lastPage?.active
         ? <NavLink href={lastPage.url} label="अन्तिम »" />
         : <NavDisabled label="अन्तिम »" />}
@@ -232,12 +223,7 @@ const Pagination = ({ links, color }) => {
 };
 
 // ─── MAIN COMPONENT ───────────────────────────────────────────────────────────
-const CategoryPage = ({
-  slug,
-  category,
-  news,     // Laravel paginator: { data:[], links:[], meta:{}, total }
-  moreNews,
-}) => {
+const CategoryPage = ({ slug, category, news, moreNews }) => {
 
   const newsData = news?.data || [];
   const moreData = moreNews  || [];
@@ -247,35 +233,34 @@ const CategoryPage = ({
   const description  = category?.description || '';
 
   const stories = newsData.map(transformItem);
-  
-  // Show at least 4 news items before "अरू समाचार" section
-  // Take first 4 stories (hero, second, and next two) for initial display
+
   const [hero, second, third, fourth, ...rest] = stories;
-  
-  // Ensure we have at least 4 items in initial display
-  const initialDisplay = [];
-  if (hero) initialDisplay.push(hero);
-  if (second) initialDisplay.push(second);
-  if (third) initialDisplay.push(third);
-  if (fourth) initialDisplay.push(fourth);
+  const initialDisplay = [hero, second, third, fourth].filter(Boolean);
 
   const sidebarList = moreData.length > 0
     ? moreData.map(transformItem)
-    : stories.slice(8, 13); // Adjusted to show different items in sidebar
+    : stories.slice(8, 13);
+
+  // ✅ Measure left column height, cap sidebar to match
+  const mainRef = useRef(null);
+  const [mainHeight, setMainHeight] = useState(null);
+
+  useEffect(() => {
+    if (!mainRef.current) return;
+    const observer = new ResizeObserver(() => {
+      setMainHeight(mainRef.current?.offsetHeight ?? null);
+    });
+    observer.observe(mainRef.current);
+    return () => observer.disconnect();
+  }, [stories.length]); // re-measure when stories change
 
   return (
     <>
-      <Head title={`${categoryName} — शुचीखबर`} />
-      <BannerStrip />
+      <Head title={`${categoryName} `} />
       <Navbar />
 
       <div className="bg-white min-h-screen">
-
-        {/* ══ LEADERBOARD — Rectangle banners (self-contained component) ══════ */}
-        <LeaderboardBanner />
-
-        {/* ══ PAGE BODY ════════════════════════════════════════════════════════ */}
-        <div className="max-w-7xl mx-auto px-3 md:px-5 py-4">
+        <div className=" px-3 md:px-24 py-4">
 
           {/* Breadcrumb */}
           <nav className="flex items-center gap-1.5 text-[0.72rem] text-[#b0a498] mb-3">
@@ -292,24 +277,17 @@ const CategoryPage = ({
                   style={{ color, fontFamily: "'Noto Serif Devanagari', Georgia, serif" }}>
                 {categoryName}
               </h1>
-              {news?.total > 0 && (
-                <span className="text-[0.64rem] font-bold px-2 py-0.5 text-white"
-                      style={{ background: color, opacity: 0.85 }}>
-                  {news.total} समाचार
-                </span>
-              )}
             </div>
             {description && (
               <p className="text-[0.78rem] text-[#8a7f75] ml-5 mt-1 leading-relaxed">{description}</p>
             )}
           </div>
 
-          {/* ══ TWO-COLUMN LAYOUT ════════════════════════════════════════════ */}
+          {/* ── TWO-COLUMN LAYOUT ── */}
           <div className="flex gap-5 items-start">
 
-            {/* ─── LEFT: article grid ────────────────────────────────────── */}
-            <main className="flex-1 min-w-0 flex flex-col gap-3">
-
+            {/* LEFT: article grid */}
+            <main className="flex-1 min-w-0 flex flex-col gap-3" ref={mainRef}>
               {stories.length === 0 ? (
                 <div className="bg-white border border-[rgba(0,0,0,0.08)] flex flex-col
                                 items-center justify-center py-20 text-center">
@@ -333,15 +311,14 @@ const CategoryPage = ({
                 </div>
               ) : (
                 <>
-                  {/* Initial display - at least 4 news items in a grid */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    {initialDisplay.map((story, index) => (
+                    {initialDisplay.map((story) => (
                       <FeaturedCard key={story.id} story={story} color={color} />
                     ))}
                   </div>
-                  <LeaderboardBanner/>
 
-                  {/* Show "अरू समाचार" section only if there are more stories */}
+                  <LeaderboardBanner />
+
                   {rest.length > 0 && (
                     <>
                       <div className="flex items-center gap-3 mt-2">
@@ -350,8 +327,6 @@ const CategoryPage = ({
                               style={{ color, opacity: 0.55 }}>अरू समाचार</span>
                         <div className="flex-1 h-px bg-[rgba(0,0,0,0.08)]" />
                       </div>
-
-                      {/* Remaining stories in list cards */}
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                         {rest.map(story => (
                           <ListCard key={story.id} story={story} color={color} />
@@ -365,10 +340,14 @@ const CategoryPage = ({
               )}
             </main>
 
-            {/* ─── RIGHT: SIDEBAR ──────────────────────────────────────── */}
-            <aside className="hidden lg:flex flex-col gap-3 flex-shrink-0" style={{ width: 268 }}>
-
-              {/* थप समाचार — numbered list */}
+            {/* RIGHT: Sidebar — capped to left column height */}
+            <aside
+              className="hidden lg:flex flex-col gap-3 flex-shrink-0 overflow-hidden"
+              style={{
+                width: 268,
+                maxHeight: mainHeight ? `${mainHeight}px` : 'none',
+              }}
+            >
               {sidebarList.length > 0 && (
                 <div className="bg-white border border-[rgba(0,0,0,0.08)] overflow-hidden">
                   <div className="flex items-center gap-2 px-3 py-2.5 border-b-2"
@@ -386,9 +365,7 @@ const CategoryPage = ({
                 </div>
               )}
 
-              {/* Square banners — self-contained component ── */}
               <SidebarBanner />
-
             </aside>
 
           </div>

@@ -1,5 +1,4 @@
-
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import {
     FileDown,
     User,
@@ -12,13 +11,13 @@ import {
     ChevronLeft,
     ChevronRight,
     Plus,
+    ExternalLink,
 } from "lucide-react";
 import axios from "axios";
-
-import ReactPaginate from "react-paginate";
 import AdminWrapper from "@/AdminDashboard/AdminWrapper";
 import AddHeadingForm from "@/AddFormComponent/AddHeadingForm";
 import EditHeadingForm from "@/EditFormComponents/EditHeadingForm";
+import MyTable from "@/MyTable/MyTable";
 
 const Heading = () => {
     const [allHeadings, setAllHeadings] = useState([]);
@@ -26,15 +25,15 @@ const Heading = () => {
     const [editingHeading, setEditingHeading] = useState(null);
     const [showHeadingForm, setShowHeadingForm] = useState(false);
     const [showEditForm, setShowEditForm] = useState(false);
-    const [currentPage, setCurrentPage] = useState(0);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState(null);
     const [allCategory, setAllCategory] = useState([]);
     const [dailyLimitError, setDailyLimitError] = useState(false);
-    const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [searchQuery, setSearchQuery] = useState("");
-
-    const itemsPerPage = 15;
+    
+    // Pagination state for MyTable
+    const [currentPage, setCurrentPage] = useState(1);
+    const [perPage, setPerPage] = useState(10);
 
     // Truncate text utility
     const truncateText = (text, maxLength) => {
@@ -52,13 +51,6 @@ const Heading = () => {
             setEditingHeading(null);
         }
     };
-
-    // Filter headings based on search query
-    const filteredHeadings = allHeadings.filter(
-        (item) =>
-            item.heading?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            item.description?.toLowerCase().includes(searchQuery.toLowerCase())
-    );
 
     // Fetch headings from API
     useEffect(() => {
@@ -80,7 +72,7 @@ const Heading = () => {
                 }
 
                 setAllHeadings(headingsData);
-                setCurrentPage(0);
+                setCurrentPage(1); // Reset to first page
             } catch (error) {
                 console.error("Error fetching headings:", error);
                 setError("Failed to fetch headings. Please try again.");
@@ -155,57 +147,162 @@ const Heading = () => {
         }
     };
 
-    // Pagination logic
-    const offset = currentPage * itemsPerPage;
-    const currentHeadings = filteredHeadings.slice(
-        offset,
-        offset + itemsPerPage
-    );
-    const pageCount = Math.ceil(filteredHeadings.length / itemsPerPage);
+    // Filter headings based on search query
+    const filteredHeadings = useMemo(() => {
+        if (!searchQuery) return allHeadings;
+        
+        return allHeadings.filter(
+            (item) =>
+                item.heading?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                item.description?.toLowerCase().includes(searchQuery.toLowerCase())
+        );
+    }, [allHeadings, searchQuery]);
 
-    const handlePageChange = ({ selected }) => {
-        setCurrentPage(selected);
-    };
+    // Define table columns
+    const columns = useMemo(() => [
+        {
+            Header: 'S.No',
+            accessor: (row, index) => index + 1,
+            id: 'sno',
+            Cell: ({ row }) => {
+                const index = filteredHeadings.findIndex(h => h.id === row.original.id);
+                return <span>{(currentPage - 1) * perPage + index + 1}</span>;
+            }
+        },
+        {
+            Header: 'Title',
+            accessor: 'heading',
+            Cell: ({ value }) => (
+                <div className="max-w-xs" title={value}>
+                    {truncateText(value, 50)}
+                </div>
+            ),
+        },
+        {
+            Header: 'Description',
+            accessor: 'description',
+            Cell: ({ value }) => (
+                <div className="max-w-md" title={value}>
+                    {truncateText(value, 70)}
+                </div>
+            ),
+        },
+        {
+            Header: 'Published Date',
+            accessor: 'published_at',
+            Cell: ({ value }) => {
+                const date = new Date(value);
+                return date.toLocaleDateString("en-US", {
+                    year: "numeric",
+                    month: "short",
+                    day: "numeric",
+                });
+            },
+        },
+        {
+            Header: 'Image',
+            accessor: 'image',
+            Cell: ({ value }) => (
+                value ? (
+                    <a 
+                        href={value} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-1 text-blue-600 hover:text-blue-800 transition-colors"
+                        title={value}
+                    >
+                        {truncateText(value, 30)} <ExternalLink size={14} />
+                    </a>
+                ) : (
+                    <span className="text-gray-400">No image</span>
+                )
+            ),
+        },
+        {
+            Header: 'Actions',
+            accessor: 'actions',
+            Cell: ({ row }) => (
+                <div className="flex items-center gap-2">
+                    <button
+                        onClick={() => handleEdit(row.original)}
+                        className="p-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors"
+                        title="Edit heading"
+                    >
+                        <Edit size={16} />
+                    </button>
+                    <button
+                        onClick={() => handleDelete(row.original.id)}
+                        className="p-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors"
+                        title="Delete heading"
+                    >
+                        <Trash size={16} />
+                    </button>
+                </div>
+            ),
+        },
+    ], [filteredHeadings, currentPage, perPage]);
+
+    // Calculate pagination
+    const pagination = useMemo(() => ({
+        currentPage,
+        lastPage: Math.ceil(filteredHeadings.length / perPage),
+        perPage,
+        onPageChange: (page) => setCurrentPage(page),
+        onPerPageChange: (size) => {
+            setPerPage(size);
+            setCurrentPage(1); // Reset to first page when changing items per page
+        },
+    }), [currentPage, perPage, filteredHeadings.length]);
+
+    // Get current page data
+    const currentData = useMemo(() => {
+        const start = (currentPage - 1) * perPage;
+        const end = start + perPage;
+        return filteredHeadings.slice(start, end);
+    }, [filteredHeadings, currentPage, perPage]);
 
     return (
         <AdminWrapper>
-            <div className="">
+            <div className="container mx-auto px-4 py-8">
                 {/* Header */}
-
-                <div className="flex flex-wrap items-center justify-between mb-6 md:mb-8">
-                    <div className="flex items-center">
+                <div className="flex flex-wrap items-center justify-between mb-8">
+                    <div className="flex items-center gap-4">
                         <h1 className="text-2xl md:text-3xl font-bold text-gray-800">
-                         Heading Management
+                            Heading Management
                         </h1>
+                        <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm">
+                            Total: {filteredHeadings.length}
+                        </span>
                     </div>
-                    <button
-                        onClick={() => {
-                            setEditingHeading(null);
-                            setShowHeadingForm(true);
-                        }}
-                        className="mt-2 md:mt-0 py-2 md:py-3 px-4 md:px-6 bg-red-600 hover:bg-red-700 text-white font-medium rounded-lg shadow transition duration-200 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 flex items-center gap-2 text-sm md:text-base"
-                    >
-                        <Plus size={18} className="hidden md:block" />
-                        <span>Add Heading</span>
-                    </button>
-                </div>
-                {/* <div className="flex flex-wrap items-center justify-between mb-6 md:mb-8">
-                    <h1 className="text-2xl md:text-3xl font-bold text-gray-800">
-                        Heading Management
-                    </h1>
+                    
+                    <div className="flex flex-col md:flex-row gap-3 mt-4 md:mt-0">
+                        {/* Search Input */}
+                        <div className="relative">
+                            <input
+                                type="text"
+                                placeholder="Search headings..."
+                                value={searchQuery}
+                                onChange={(e) => {
+                                    setSearchQuery(e.target.value);
+                                    setCurrentPage(1); // Reset to first page on search
+                                }}
+                                className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent w-full md:w-64"
+                            />
+                            <Search className="absolute left-3 top-2.5 text-gray-400" size={18} />
+                        </div>
 
-                    <div className="flex flex-col md:flex-row gap-3 w-full md:w-auto mt-4 md:mt-0">
                         <button
                             onClick={() => {
                                 setEditingHeading(null);
                                 setShowHeadingForm(true);
                             }}
-                            className="py-2 md:py-3 px-4 md:px-6 bg-red-600 hover:bg-red-700 text-white font-medium rounded-lg shadow transition duration-200 flex items-center justify-center gap-2 w-full md:w-auto"
+                            className="py-2 px-4 md:px-6 bg-red-600 hover:bg-red-700 text-white font-medium rounded-lg shadow transition duration-200 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 flex items-center justify-center gap-2"
                         >
-                            Add Heading
+                            <Plus size={18} />
+                            <span>Add Heading</span>
                         </button>
                     </div>
-                </div> */}
+                </div>
 
                 {/* Daily Limit Error Modal */}
                 {dailyLimitError && (
@@ -278,208 +375,54 @@ const Heading = () => {
                     </div>
                 )}
 
-                {/* Loading and Error States */}
+                {/* Loading State */}
                 {isLoading && (
-                    <div className="text-center py-8">
-                        <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-red-600"></div>
-                        <p className="mt-2 text-gray-600">
-                            Loading headings...
-                        </p>
+                    <div className="flex justify-center items-center h-64">
+                        <div className="text-center">
+                            <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-red-600"></div>
+                            <p className="mt-2 text-gray-600">Loading headings...</p>
+                        </div>
                     </div>
                 )}
 
-                {error && (
+                {/* Error State */}
+                {error && !isLoading && (
                     <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4">
                         <strong className="font-bold">Error: </strong>
                         <span className="block sm:inline">{error}</span>
                     </div>
                 )}
 
-                {/* Heading Table */}
+                {/* Table */}
                 {!isLoading && !error && (
-                    <div className="bg-white rounded-xl shadow-md overflow-hidden mt-4 md:mt-6">
-                        <div className="overflow-x-auto">
-                            <table className="min-w-full divide-y divide-gray-200">
-                                <thead className="bg-gray-50">
-                                    <tr>
-                                        <th className="px-3 md:px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                            S.no
-                                        </th>
-                                        <th className="px-3 md:px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                            Title
-                                        </th>
-                                        <th className="px-3 md:px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden sm:table-cell">
-                                            Description
-                                        </th>
-                                        <th className="px-3 md:px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell">
-                                            Published Date
-                                        </th>
-                                        <th className="px-3 md:px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden lg:table-cell">
-                                            Image Path
-                                        </th>
-                                        <th className="px-3 md:px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                            Actions
-                                        </th>
-                                    </tr>
-                                </thead>
-                                <tbody className="bg-white divide-y divide-gray-200">
-                                    {currentHeadings.length > 0 ? (
-                                        currentHeadings.map((item, index) => (
-                                            <tr
-                                                key={item.id}
-                                                className="hover:bg-gray-50"
-                                            >
-                                                <td className="px-3 md:px-4 lg:px-6 py-4 text-sm text-gray-900">
-                                                    {offset + index + 1}
-                                                </td>
-                                                <td className="px-3 md:px-4 lg:px-6 py-4">
-                                                    <div
-                                                        className="text-sm font-medium text-gray-900 max-w-xs md:max-w-sm"
-                                                        title={item.heading}
-                                                    >
-                                                        {truncateText(
-                                                            item.heading,
-                                                            window.innerWidth <
-                                                                768
-                                                                ? 25
-                                                                : 50
-                                                        )}
-                                                    </div>
-                                                    {/* Mobile-only description preview */}
-                                                    <div className="text-xs text-gray-500 mt-1 sm:hidden">
-                                                        {truncateText(
-                                                            item.description,
-                                                            40
-                                                        )}
-                                                    </div>
-                                                    {/* Mobile-only published date */}
-                                                    <div className="text-xs text-gray-500 mt-1 md:hidden">
-                                                        {new Date(
-                                                            item.published_at
-                                                        ).toLocaleDateString(
-                                                            "en-US",
-                                                            {
-                                                                year: "numeric",
-                                                                month: "short",
-                                                                day: "numeric",
-                                                            }
-                                                        )}
-                                                    </div>
-                                                </td>
-                                                <td className="px-3 md:px-4 lg:px-6 py-4 hidden sm:table-cell">
-                                                    <div
-                                                        className="text-sm text-gray-900 max-w-xs md:max-w-md"
-                                                        title={item.description}
-                                                    >
-                                                        {truncateText(
-                                                            item.description,
-                                                            window.innerWidth <
-                                                                1024
-                                                                ? 50
-                                                                : 70
-                                                        )}
-                                                    </div>
-                                                </td>
-                                                <td className="px-3 md:px-4 lg:px-6 py-4 whitespace-nowrap hidden md:table-cell">
-                                                    <div className="text-sm text-gray-900">
-                                                        {new Date(
-                                                            item.published_at
-                                                        ).toLocaleDateString(
-                                                            "en-US",
-                                                            {
-                                                                year: "numeric",
-                                                                month: "short",
-                                                                day: "numeric",
-                                                            }
-                                                        )}
-                                                    </div>
-                                                </td>
-                                                <td className="px-3 md:px-4 lg:px-6 py-4 hidden lg:table-cell">
-                                                    <div
-                                                        className="text-sm text-blue-600 max-w-xs truncate"
-                                                        title={item.image}
-                                                    >
-                                                        {truncateText(
-                                                            item.image?.trim(),
-                                                            40
-                                                        )}
-                                                    </div>
-                                                </td>
-                                                <td className="px-3 md:px-4 lg:px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                                    <div className="flex flex-col md:flex-row gap-1 md:gap-2">
-                                                        <button
-                                                            onClick={() =>
-                                                                handleEdit(item)
-                                                            }
-                                                            className="text-blue-600 hover:text-blue-900 flex items-center py-1"
-                                                        >
-                                                            <Edit
-                                                                size={14}
-                                                                className="mr-1"
-                                                            />
-                                                            <span className="hidden xs:inline">
-                                                                Edit
-                                                            </span>
-                                                        </button>
-                                                        <button
-                                                            onClick={() =>
-                                                                handleDelete(
-                                                                    item.id
-                                                                )
-                                                            }
-                                                            className="text-red-600 hover:text-red-900 flex items-center py-1"
-                                                        >
-                                                            <Trash
-                                                                size={14}
-                                                                className="mr-1"
-                                                            />
-                                                            <span className="hidden xs:inline">
-                                                                Delete
-                                                            </span>
-                                                        </button>
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        ))
-                                    ) : (
-                                        <tr>
-                                            <td
-                                                colSpan="6"
-                                                className="px-6 py-4 text-center text-gray-500"
-                                            >
-                                                {searchQuery
-                                                    ? "No headings match your search."
-                                                    : "No headings found."}
-                                            </td>
-                                        </tr>
-                                    )}
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                )}
-                {/* Pagination */}
-                {pageCount > 1 && (
-                    <div className="flex justify-center mt-4 p-4 overflow-x-auto">
-                        <ReactPaginate
-                            previousLabel={<ChevronLeft size={16} />}
-                            nextLabel={<ChevronRight size={16} />}
-                            breakLabel="..."
-                            pageCount={pageCount}
-                            marginPagesDisplayed={
-                                window.innerWidth < 768 ? 1 : 2
-                            }
-                            pageRangeDisplayed={window.innerWidth < 768 ? 3 : 5}
-                            onPageChange={handlePageChange}
-                            containerClassName="pagination flex gap-1 text-sm flex-wrap justify-center"
-                            activeClassName="bg-red-600 text-white"
-                            pageLinkClassName="block px-3 py-1 border border-gray-300 rounded hover:bg-red-50 hover:text-red-700 transition"
-                            previousLinkClassName="block px-3 py-1 border border-gray-300 rounded hover:bg-red-50 hover:text-red-700 transition"
-                            nextLinkClassName="block px-3 py-1 border border-gray-300 rounded hover:bg-red-50 hover:text-red-700 transition"
-                            disabledClassName="opacity-50 cursor-not-allowed"
-                            forcePage={currentPage}
-                        />
-                    </div>
+                    <>
+                        {filteredHeadings.length > 0 ? (
+                            <MyTable
+                                columns={columns}
+                                data={currentData}
+                                pagination={pagination}
+                            />
+                        ) : (
+                            <div className="text-center py-12 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
+                                <p className="text-gray-500 mb-4">
+                                    {searchQuery 
+                                        ? "No headings match your search." 
+                                        : "No headings found."}
+                                </p>
+                                {!searchQuery && (
+                                    <button
+                                        onClick={() => {
+                                            setEditingHeading(null);
+                                            setShowHeadingForm(true);
+                                        }}
+                                        className="py-2 px-4 bg-red-600 text-white rounded-lg hover:bg-red-700 transition"
+                                    >
+                                        Add Your First Heading
+                                    </button>
+                                )}
+                            </div>
+                        )}
+                    </>
                 )}
             </div>
         </AdminWrapper>

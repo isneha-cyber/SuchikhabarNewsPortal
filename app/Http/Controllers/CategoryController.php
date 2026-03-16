@@ -27,7 +27,7 @@ class CategoryController extends Controller
  */
 public function showDetails($slug, Request $request)
 {
-    $perPage = 15;
+    $perPage = 16;
 
     // Get category
     $category = Category::where('slug', $slug)->firstOrFail();

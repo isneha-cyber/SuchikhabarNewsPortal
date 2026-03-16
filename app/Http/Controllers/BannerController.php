@@ -48,6 +48,7 @@ class BannerController extends Controller
         $validated = $request->validate([
             'image' => 'required|image|mimes:jpeg,png,jpg,gif,webp|max:10240',
             'category' => 'required|string|in:Rectangle,Square',
+            'priority' => 'nullable|integer|min:0',
             'link' => 'nullable|url|max:2048',
         ], [
             'category.in' => 'The category must be either Rectangle or Square.',
@@ -91,6 +92,7 @@ class BannerController extends Controller
         $validated = $request->validate([
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:10240',
             'category' => 'required|string|in:Rectangle,Square',
+            'priority' => 'nullable|integer|min:0',
             'link' => 'nullable|url|max:2048',
         ], [
             'category.in' => 'The category must be either Rectangle or Square.',
@@ -151,4 +153,7 @@ class BannerController extends Controller
             'message' => 'Banner deleted successfully.'
         ], 200);
     }
-}
+
+
+
+    }

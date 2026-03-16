@@ -6,8 +6,11 @@ use Illuminate\Database\Eloquent\Model;
 
 class Banner extends Model
 {
-    //
-    protected $fillable=[
-        'image','category','link'
+    protected $fillable = [
+        'image', 'category', 'link', 'priority'
+    ];
+
+    protected $casts = [
+        'priority' => 'integer',
     ];
 }

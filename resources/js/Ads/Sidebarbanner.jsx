@@ -19,7 +19,7 @@ const SidebarSkeleton = () => (
     {[0, 1, 2].map(i => (
       <div
         key={i}
-        className="w-full bg-[#ece9e4] animate-pulse rounded-sm"
+        className="w-full bg-white animate-pulse rounded-sm"
         style={{ height: i === 1 ? 200 : 260 }} // Mixed heights for variety
       />
     ))}

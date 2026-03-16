@@ -1,11 +1,10 @@
-
 import AddBannerForm from "@/AddFormComponent/AddBannerForm";
 import AdminWrapper from "@/AdminDashboard/AdminWrapper";
 import EditBannerForm from "@/EditFormComponents/EditBannerForm";
+import MyTable from "@/MyTable/MyTable";
 import axios from "axios";
-import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
-import React, { useEffect, useState } from "react";
-import ReactPaginate from "react-paginate";
+import { Pencil, Trash2, ExternalLink } from "lucide-react";
+import React, { useEffect, useState, useMemo } from "react";
 
 const imgurl = import.meta.env.VITE_IMAGE_PATH;
 
@@ -16,36 +15,45 @@ const Banners = () => {
     const [showEditForm, setShowEditForm] = useState(false);
     const [editingBanner, setEditingBanner] = useState(null);
     const [loading, setLoading] = useState(true);
+    
+    // Pagination state for MyTable
+    const [currentPage, setCurrentPage] = useState(1);
+    const [perPage, setPerPage] = useState(10);
 
-    // Pagination state
-    const [currentPage, setCurrentPage] = useState(0);
-    const itemsPerPage = 15;
+   useEffect(() => {
+    const fetchBanner = async () => {
+        try {
+            setLoading(true);
+            console.log("Fetching banners...");
+            const response = await axios.get(route("banner.index"));
+            console.log("API Response:", response.data);
 
-    useEffect(() => {
-        const fetchBanner = async () => {
-            try {
-                setLoading(true);
-                console.log("Fetching banners...");
-                const response = await axios.get(route("banner.index"));
-                console.log("API Response:", response.data);
-
-                if (response.data && response.data.data) {
-                    setAllBanner(response.data.data);
-                } else {
-                    setAllBanner(response.data || []);
-                }
-            } catch (error) {
-                console.error("Error fetching banners:", error);
-                if (error.response) {
-                    console.error("Error response:", error.response.data);
-                }
-                setAllBanner([]);
-            } finally {
-                setLoading(false);
+            let data = [];
+            if (response.data && response.data.data) {
+                data = response.data.data;
+            } else {
+                data = response.data || [];
             }
-        };
-        fetchBanner();
-    }, [reloadTrigger]);
+
+            // Sort latest first
+            const sorted = [...data].sort((a, b) => {
+                return new Date(b.created_at) - new Date(a.created_at);
+                // Or if using id: return b.id - a.id;
+            });
+
+            setAllBanner(sorted);
+        } catch (error) {
+            console.error("Error fetching banners:", error);
+            if (error.response) {
+                console.error("Error response:", error.response.data);
+            }
+            setAllBanner([]);
+        } finally {
+            setLoading(false);
+        }
+    };
+    fetchBanner();
+}, [reloadTrigger]);
 
     // Handle delete
     const handleDelete = async (id) => {
@@ -88,20 +96,109 @@ const Banners = () => {
         setShowEditForm(false);
     };
 
-    // Pagination logic
-    const handlePageClick = ({ selected }) => {
-        setCurrentPage(selected);
-    };
+    // Define table columns
+    const columns = useMemo(() => [
+        {
+                Header: "SN",
+                accessor: (row, i) => i + 1,
+                id: "rowIndex",
+                width: 60,
+            },
+        {
+            Header: 'Image',
+            accessor: 'image',
+            Cell: ({ value }) => (
+                <div className="flex items-center">
+                    <img 
+                        src={value} 
+                        alt="Banner" 
+                        className="w-16 h-16 object-cover rounded-lg shadow-sm"
+                        onError={(e) => {
+                            e.target.src = 'https://via.placeholder.com/64x64?text=No+Image';
+                        }}
+                    />
+                </div>
+            ),
+        },
+        {
+            Header: 'Category',
+            accessor: 'category',
+            Cell: ({ value }) => (
+                <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                    value?.toLowerCase() === 'rectangle' 
+                        ? 'bg-blue-100 text-blue-800' 
+                        : 'bg-purple-100 text-purple-800'
+                }`}>
+                    {value || 'N/A'}
+                </span>
+            ),
+        },
+        {
+            Header: 'Link',
+            accessor: 'link',
+            Cell: ({ value }) => (
+                value ? (
+                    <a 
+                        href={value} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-1 text-blue-600 hover:text-blue-800 transition-colors"
+                    >
+                        View Link <ExternalLink size={14} />
+                    </a>
+                ) : (
+                    <span className="text-gray-400">No link</span>
+                )
+            ),
+        },
+        {
+            Header: 'Actions',
+            accessor: 'actions',
+            Cell: ({ row }) => (
+                <div className="flex items-center gap-2">
+                    <button
+                        onClick={() => handleEdit(row.original)}
+                        className="p-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors"
+                        title="Edit banner"
+                    >
+                        <Pencil size={16} />
+                    </button>
+                    <button
+                        onClick={() => handleDelete(row.original.id)}
+                        className="p-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors"
+                        title="Delete banner"
+                    >
+                        <Trash2 size={16} />
+                    </button>
+                </div>
+            ),
+        },
+    ], []);
 
-    const offset = currentPage * itemsPerPage;
-    const currentBanners = allbanner.slice(offset, offset + itemsPerPage);
-    const pageCount = Math.ceil(allbanner.length / itemsPerPage);
+    // Calculate pagination
+    const pagination = useMemo(() => ({
+        currentPage,
+        lastPage: Math.ceil(allbanner.length / perPage),
+        perPage,
+        onPageChange: (page) => setCurrentPage(page),
+        onPerPageChange: (size) => {
+            setPerPage(size);
+            setCurrentPage(1); // Reset to first page when changing items per page
+        },
+    }), [currentPage, perPage, allbanner.length]);
+
+    // Get current page data
+    const currentData = useMemo(() => {
+        const start = (currentPage - 1) * perPage;
+        const end = start + perPage;
+        return allbanner.slice(start, end);
+    }, [allbanner, currentPage, perPage]);
 
     if (loading) {
         return (
             <AdminWrapper>
-                <div className="p-4">
-                    <p>Loading banners...</p>
+                <div className="flex justify-center items-center h-64">
+                    <div className="text-gray-500">Loading banners...</div>
                 </div>
             </AdminWrapper>
         );
@@ -109,80 +206,43 @@ const Banners = () => {
 
     return (
         <AdminWrapper>
-            <div className="">
+            <div className="container mx-auto px-4 py-8">
                 {/* Header */}
-                <div className="flex flex-wrap items-center justify-between mb-6 md:mb-8">
+                <div className="flex flex-wrap items-center justify-between mb-8">
                     <div className="flex items-center">
                         <h1 className="text-2xl md:text-3xl font-bold text-gray-800">
-                            Banners
+                            Banners Management
                         </h1>
+                        <span className="ml-4 px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm">
+                            Total: {allbanner.length}
+                        </span>
                     </div>
                     <button
                         onClick={() => setShowAddForm(true)}
                         className="mt-2 md:mt-0 py-2 md:py-3 px-4 md:px-6 bg-red-600 hover:bg-red-700 text-white font-medium rounded-lg shadow transition duration-200 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 flex items-center gap-2 text-sm md:text-base"
                     >
-                        <Plus size={18} className="hidden md:block" />
-                        <span>Add Banner</span>
+                        <span>Add New Banner</span>
                     </button>
                 </div>
-                {/* <div className="flex flex-col md:flex-row justify-between mb-6 gap-4">
-                    <h2 className="text-2xl font-semibold">Banners</h2>
-                    <button
-                        onClick={() => setShowAddForm(true)}
-                        className="py-3 px-4 bg-red-700 text-white rounded-xl hover:bg-red-800 transition"
-                    >
-                        Add Banner
-                    </button>
-                </div> */}
 
-                {/* Banner Grid */}
-                <div className="flex flex-col gap-6">
-                    {currentBanners.length > 0 ? (
-                        currentBanners.map((item) => (
-                            <div
-                                key={item.id}
-                                className="relative overflow-hidden rounded-lg shadow-lg hover:shadow-xl transition-shadow"
-                            >
-                                <a
-                                    href={item.link?.trim() || "#"}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="block"
-                                >
-                                    <div
-                                        className={`${
-                                            item.category === "rectangle" ||
-                                            item.category === "Rectangle"
-                                                ? "w-full h-32 md:h-40"
-                                                : "w-56 h-48 md:h-56"
-                                        } bg-cover bg-center object-cover`}
-                                        style={{
-                                            backgroundImage: `url(${item.image})`,
-                                        }}
-                                    ></div>
-                                </a>
-
-                                {/* Edit & Delete Buttons */}
-                                <div className="absolute top-2 right-2 flex gap-2">
-                                    <button
-                                        onClick={() => handleEdit(item)}
-                                        className="px-3 py-1 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 transition"
-                                    >
-                                        Edit
-                                    </button>
-                                    <button
-                                        onClick={() => handleDelete(item.id)}
-                                        className="px-3 py-1 bg-red-600 text-white text-sm rounded hover:bg-red-700 transition"
-                                    >
-                                        Delete
-                                    </button>
-                                </div>
-                            </div>
-                        ))
-                    ) : (
-                        <p className="text-gray-500">No banners found.</p>
-                    )}
-                </div>
+                {/* Table */}
+                {allbanner.length > 0 ? (
+                    <MyTable
+                        columns={columns}
+                        data={currentData}
+                        pagination={pagination}
+                    />
+                ) : (
+                    <div className="text-center py-12 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
+                        <p className="text-gray-500 mb-4">No banners found.</p>
+                        <button
+                            onClick={() => setShowAddForm(true)}
+                            className="py-2 px-4 bg-red-600 text-white rounded-lg hover:bg-red-700 transition"
+                        >
+                            Add Your First Banner
+                        </button>
+                    </div>
+                )}
 
                 {/* Add Form Modal */}
                 {showAddForm && (
@@ -191,6 +251,7 @@ const Banners = () => {
                         setShowForm={setShowAddForm}
                         reloadTrigger={reloadTrigger}
                         setReloadTrigger={setReloadTrigger}
+                        maxImageSizeMb={10}
                     />
                 )}
 
@@ -204,32 +265,8 @@ const Banners = () => {
                         handleClose={handleCloseEdit}
                         reloadTrigger={reloadTrigger}
                         setReloadTrigger={setReloadTrigger}
+                        maxImageSizeMb={10}
                     />
-                )}
-
-                {/* Pagination */}
-                {pageCount > 1 && (
-                    <div className="mt-8">
-                        <ReactPaginate
-                            previousLabel={<ChevronLeft size={16} />}
-                            nextLabel={<ChevronRight size={16} />}
-                            breakLabel="..."
-                            pageCount={pageCount}
-                            marginPagesDisplayed={2}
-                            pageRangeDisplayed={5}
-                            onPageChange={handlePageClick}
-                            containerClassName="flex justify-center items-center space-x-1 text-sm mt-4"
-                            // Common link styling
-                            pageLinkClassName="block px-3 py-1 border rounded hover:bg-gray-100 transition"
-                            previousLinkClassName="block px-3 py-1 border rounded hover:bg-gray-100 transition"
-                            nextLinkClassName="block px-3 py-1 border rounded hover:bg-gray-100 transition"
-                            breakLinkClassName="block px-3 py-1 border-transparent"
-                            // Optional: if you want to style disabled states
-                            disabledLinkClassName="opacity-50 cursor-not-allowed"
-                            // Active page style
-                            activeLinkClassName="bg-red-700 text-white hover:bg-red-800"
-                        />
-                    </div>
                 )}
             </div>
         </AdminWrapper>

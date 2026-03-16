@@ -16,15 +16,17 @@ const CATEGORIES = [
 ];
 
 const USEFUL_LINKS = [
-  { label: 'विज्ञापन सम्पर्क',  href: '#' },
-  { label: 'समाचार पठाउनुहोस्', href: '#' },
-  { label: 'गोपनीयता नीति',     href: '#' },
-  { label: 'सेवाका सर्तहरू',    href: '#' },
+  { label: 'गृहपृष्ठ',          href: '/' },
+  { label: 'हाम्रो टिम',        href: '/hamro-team' },
+  { label: 'गोपनीयता नीति',     href: '/category/अर्थतन्त्र' },
+  { label: 'विज्ञापन सम्पर्क',  href: 'https://www.facebook.com/ShuchiKhabar' },
+  { label: 'समाचार पठाउनुहोस्', href: 'https://www.facebook.com/ShuchiKhabar' },
+  { label: 'सेवाका सर्तहरू',    href: '/privacy-policy' },
 ];
 
 const SOCIAL_LINKS = [
   {
-    href: 'https://www.facebook.com/shuchikhabar',
+    href: 'https://www.facebook.com/ShuchiKhabar',
     label: 'Facebook',
     icon: (
       <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16">
@@ -106,7 +108,7 @@ const Footer = () => (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 border-b border-white/15">
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 lg:gap-16">
 
-        {/* ── Col 1: About with Registration Details ── */}
+        {/* ── Col 1: About with Registration Details and Address ── */}
         <div className="flex flex-col">
           {/* Logo */}
           <div className="mb-5">
@@ -127,7 +129,14 @@ const Footer = () => (
             ताजा समाचार र विश्लेषण प्रदान गर्दछ।
           </p>
 
-          {/* Registration Details - Added from your HTML */}
+          {/* Address */}
+          <div className="mt-2 space-y-1">
+            <p className="text-[0.85rem] text-white/80">
+              <span className="font-medium">ठेगाना:</span> चन्द्रागिरी नगरपालिका–११, काठमाडौं
+            </p>
+          </div>
+
+          {/* Registration Details */}
           <div className="mt-2 space-y-1">
             <p className="text-[0.85rem] text-white/80 font-medium">
               सूचना विभाग दर्ता नं.: २०७८/०७७-७८
@@ -135,9 +144,10 @@ const Footer = () => (
             <p className="text-[0.85rem] text-white/80">
               प्रकाशक: शुचि मिडिया एण्ड इभेन्ट प्रा. लि.
             </p>
+            <p className="text-[0.85rem] text-white/80">
+              <span className="font-medium">सम्पादक:</span> प्रदीप ज्ञवाली
+            </p>
           </div>
-
-         
         </div>
 
         {/* ── Col 2: Useful Links + Social ── */}
@@ -148,17 +158,17 @@ const Footer = () => (
             {USEFUL_LINKS.map(link => (
               <li key={link.label} className="flex items-center gap-2.5">
                 <span className="w-1.5 h-1.5 rounded-full bg-[#8B0000] flex-shrink-0" />
-                <a
+                <Link
                   href={link.href}
                   className="text-[0.84rem] text-white/70 hover:text-white transition-colors duration-150"
                 >
                   {link.label}
-                </a>
+                </Link>
               </li>
             ))}
           </ul>
 
-          {/* Social icons - Alternative style if needed */}
+          {/* Social icons */}
           <div className="mt-auto">
             <p className="text-[0.75rem] text-white/40 uppercase tracking-widest mb-3 font-medium">
               सामाजिक सञ्जाल
@@ -192,8 +202,22 @@ const Footer = () => (
           </p>
 
           <div className="space-y-2.5">
+            {/* Phone Number */}
             <a
-              href="mailto:info@shuchikhabar.com"
+              href="tel:+9779851310487"
+              className="flex items-center gap-2.5 text-[0.84rem] text-white/70 hover:text-white transition-colors duration-150 group"
+            >
+              <span className="w-7 h-7 rounded-full border border-white/20 flex items-center justify-center flex-shrink-0 group-hover:border-white/50 transition-colors">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="13" height="13">
+                  <path d="M22 16.92v3a1.999 1.999 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.362 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.574 2.81.7A2 2 0 0 1 22 16.92z" />
+                </svg>
+              </span>
+              +977 9851310487
+            </a>
+
+            {/* Email */}
+            <a
+              href="mailto:shuchikhabar@gmail.com"
               className="flex items-center gap-2.5 text-[0.84rem] text-white/70 hover:text-white transition-colors duration-150 group"
             >
               <span className="w-7 h-7 rounded-full border border-white/20 flex items-center justify-center flex-shrink-0 group-hover:border-white/50 transition-colors">
@@ -202,8 +226,10 @@ const Footer = () => (
                   <polyline points="22,6 12,13 2,6" />
                 </svg>
               </span>
-              info@shuchikhabar.com
+              shuchikhabar@gmail.com
             </a>
+
+            {/* Website */}
             <a
               href="https://shuchikhabar.com"
               target="_blank"
@@ -228,14 +254,13 @@ const Footer = () => (
               href="https://www.sait.com.np/"
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center justify-center border border-white/20 rounded px-3 py-1.5
-                         hover:border-white/40 hover:bg-white/5 transition-all duration-200"
+              className="inline-flex items-center justify-center"
               style={{ height: 44 }}
             >
               <img
                 src="/images/sait.gif"
                 alt="SAIT"
-                className="h-7 w-auto object-contain"
+                className="h-12 w-auto object-contain"
                 onError={e => {
                   e.currentTarget.style.display = 'none';
                   e.currentTarget.nextSibling.style.display = 'flex';

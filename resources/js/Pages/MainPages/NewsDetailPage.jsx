@@ -1,11 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Link, Head } from '@inertiajs/react';
 import BannerStrip from '@/Ads/BannerStrip';
-import TickerStrip from '@/Ads/Tickerstrip';
 import Navbar from '@/Suchikhabar/Navbar';
 import Footer from '@/Suchikhabar/Footer';
-import LeaderboardBanner from '@/Ads/LeaderboardBanner'; // Add this import
-import SidebarBanner from '@/Ads/SidebarBanner'; // Add this import
+import LeaderboardBanner from '@/Ads/LeaderboardBanner';
+import SidebarBanner from '@/Ads/SidebarBanner';
 
 // ─── ICONS ───────────────────────────────────────────────────────────────────
 const ClockIcon = ({ size = 11 }) => (
@@ -38,81 +37,123 @@ const stripHtml = (html) => {
   return tmp.textContent || tmp.innerText || '';
 };
 
+// Custom function to format date in Nepali
+const formatNepaliDate = (dateString) => {
+  if (!dateString) return 'मिति उपलब्ध छैन';
+  
+  const date = new Date(dateString);
+  
+  // Nepali month names
+  const nepaliMonths = [
+    'जनवरी', 'फेब्रुअरी', 'मार्च', 'अप्रिल', 'मे', 'जुन',
+    'जुलाई', 'अगष्ट', 'सेप्टेम्बर', 'अक्टोबर', 'नोभेम्बर', 'डिसेम्बर'
+  ];
+  
+  // Nepali weekday names
+  const nepaliWeekdays = [
+    'आइतबार', 'सोमबार', 'मङ्गलबार', 'बुधबार', 
+    'बिहिबार', 'शुक्रबार', 'शनिबार'
+  ];
+  
+  const year = date.getFullYear();
+  const month = nepaliMonths[date.getMonth()];
+  const day = date.getDate();
+  const weekday = nepaliWeekdays[date.getDay()];
+  
+  return `${weekday}, ${month} ${day}, ${year}`;
+};
+
+// Alternative using Intl with fallback
 const formatDate = (dateString) => {
   if (!dateString) return 'मिति उपलब्ध छैन';
-  const date = new Date(dateString);
-  return date.toLocaleDateString('ne-NP', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-    weekday: 'long'
-  });
+  
+  try {
+    // Try using Intl.DateTimeFormat with Nepali locale
+    return new Date(dateString).toLocaleDateString('ne-NP', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      weekday: 'long'
+    });
+  } catch (error) {
+    // Fallback to custom formatting if Nepali locale fails
+    return formatNepaliDate(dateString);
+  }
 };
 
 const timeAgo = (dateString) => {
   if (!dateString) return 'नयाँ';
-  const date = new Date(dateString);
-  const now = new Date();
-  const diffInSeconds = Math.floor((now - date) / 1000);
   
-  if (diffInSeconds < 60) return 'अहिले';
-  if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)} मिनेट अघि`;
-  if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)} घण्टा अघि`;
-  return `${Math.floor(diffInSeconds / 86400)} दिन अघि`;
+  const diff = Math.floor((Date.now() - new Date(dateString)) / 1000);
+  
+  // Nepali time ago strings
+  if (diff < 60) return 'अहिले';
+  if (diff < 3600) return `${Math.floor(diff / 60)} मिनेट अघि`;
+  if (diff < 86400) return `${Math.floor(diff / 3600)} घण्टा अघि`;
+  if (diff < 2592000) return `${Math.floor(diff / 86400)} दिन अघि`;
+  if (diff < 31536000) return `${Math.floor(diff / 2592000)} महिना अघि`;
+  return `${Math.floor(diff / 31536000)} वर्ष अघि`;
 };
 
+// Convert English numbers to Nepali numbers (optional)
+const convertToNepaliNumbers = (text) => {
+  const nepaliDigits = ['०', '१', '२', '३', '४', '५', '६', '७', '८', '९'];
+  return text.replace(/\d/g, (digit) => nepaliDigits[parseInt(digit)]);
+};
+
+// If you want dates with Nepali digits as well, use this instead of formatDate
+const formatDateWithNepaliDigits = (dateString) => {
+  if (!dateString) return 'मिति उपलब्ध छैन';
+  
+  try {
+    const formatted = new Date(dateString).toLocaleDateString('ne-NP', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      weekday: 'long'
+    });
+    return convertToNepaliNumbers(formatted);
+  } catch (error) {
+    const formatted = formatNepaliDate(dateString);
+    return convertToNepaliNumbers(formatted);
+  }
+};
 // ─── CATEGORY COLORS ─────────────────────────────────────────────────────────
 const CATEGORY_COLORS = {
-  'मुख्य': '#8B0000',
-  'समाचार': '#1c3f6e',
-  'अर्थतन्त्र': '#1a6b3c',
-  'अर्थ': '#1a6b3c',
-  'अन्तर्राष्ट्रिय': '#00649b',
-  'खेलकुद': '#b8860b',
-  'मनोरञ्जन': '#9d174d',
-  'कृषि': '#3d6b1a',
-  'स्वास्थ्य': '#b91c1c',
-  'धार्मिक': '#7c3d12',
-  'विचार': '#374151',
-  'प्रवास': '#006B8B',
-  'प्रदेश': '#B85C00',
+  'मुख्य': '#8B0000', 'समाचार': '#1c3f6e', 'अर्थतन्त्र': '#1a6b3c',
+  'अर्थ': '#1a6b3c', 'अन्तर्राष्ट्रिय': '#00649b', 'खेलकुद': '#b8860b',
+  'मनोरञ्जन': '#9d174d', 'कृषि': '#3d6b1a', 'स्वास्थ्य': '#b91c1c',
+  'धार्मिक': '#7c3d12', 'विचार': '#374151', 'प्रवास': '#006B8B', 'प्रदेश': '#B85C00',
 };
-
 const getCategoryColor = (name) => CATEGORY_COLORS[name] || '#8B0000';
 
 // ─── TRANSFORM FUNCTIONS ─────────────────────────────────────────────────────
 const transformArticle = (item) => ({
-  id: item.id,
-  title: item.heading || item.title || '',
-  slug: item.slug || String(item.id),
-  image: item.image ? `/storage/${item.image}` : null,
+  id:            item.id,
+  title:         item.heading || item.title || '',
+  slug:          item.slug || String(item.id),
+  image:         item.image ? `/storage/${item.image}` : null,
   image_caption: item.image_caption || '',
-  published_at: formatDate(item.published_at),
-  updated_at: timeAgo(item.updated_at || item.published_at),
-  author: {
-    name: item.blog_by || 'समाचार टोली',
-    avatar: null
-  },
-  views: item.views || Math.floor(Math.random() * 5000) + 1000,
-  content: item.description || '<p>सामग्री उपलब्ध छैन</p>',
+published_at:  formatDateWithNepaliDigits(item.published_at),
+  updated_at:    timeAgo(item.updated_at || item.published_at),
+  author:        { name: item.blog_by || 'समाचार टोली', avatar: null },
+  views:         item.views || Math.floor(Math.random() * 5000) + 1000,
+  content:       item.description || '<p>सामग्री उपलब्ध छैन</p>',
   category: {
-    name: item.category || 'सामान्य',
-    slug: item.category ? item.category.toLowerCase().replace(/[^\w]/g, '-') : 'general',
-    color: getCategoryColor(item.category)
+    name:  item.category || 'सामान्य',
+    slug:  item.category ? item.category.toLowerCase().replace(/[^\w]/g, '-') : 'general',
+    color: getCategoryColor(item.category),
   },
   tags: item.tags || [],
 });
 
 const transformRelated = (item) => ({
-  id: item.id,
-  title: item.heading || item.title || '',
-  slug: item.slug || String(item.id),
-  image: item.image ? `/storage/${item.image}` : null,
-  time: timeAgo(item.published_at),
-  category: {
-    name: item.category || 'सामान्य',
-    color: getCategoryColor(item.category)
-  }
+  id:       item.id,
+  title:    item.heading || item.title || '',
+  slug:     item.slug || String(item.id),
+  image:    item.image ? `/storage/${item.image}` : null,
+  time:     timeAgo(item.published_at),
+  category: { name: item.category || 'सामान्य', color: getCategoryColor(item.category) },
 });
 
 // ─── SOCIAL SHARE BUTTONS ────────────────────────────────────────────────────
@@ -129,14 +170,9 @@ const SocialShare = ({ title }) => {
         { label: 'Twitter',  bg: '#1da1f2', href: `https://twitter.com/intent/tweet?text=${encoded}&url=${url}` },
         { label: 'WhatsApp', bg: '#25d366', href: `https://wa.me/?text=${encoded}%20${url}` },
       ].map(s => (
-        <a
-          key={s.label}
-          href={s.href}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-white text-[0.75rem] font-bold px-3 py-1.5 transition-opacity hover:opacity-80"
-          style={{ background: s.bg }}
-        >
+        <a key={s.label} href={s.href} target="_blank" rel="noopener noreferrer"
+           className="text-white text-[0.75rem] font-bold px-3 py-1.5 transition-opacity hover:opacity-80"
+           style={{ background: s.bg }}>
           {s.label}
         </a>
       ))}
@@ -151,21 +187,16 @@ const RelatedCard = ({ story }) => (
                         hover:border-[rgba(0,0,0,0.2)] transition-colors cursor-pointer">
       <div className="relative flex-shrink-0 overflow-hidden" style={{ width: 90, minHeight: 70 }}>
         {story.image ? (
-          <img
-            src={story.image}
-            alt={story.title}
-            className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.07]"
-          />
+          <img src={story.image} alt={story.title}
+               className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.07]" />
         ) : (
           <div className="absolute inset-0 bg-[#e8e4df]" />
         )}
         <div className="absolute left-0 top-0 bottom-0 w-[3px]" style={{ background: story.category.color }} />
       </div>
       <div className="flex flex-col justify-between py-2 pr-2 flex-1 min-w-0">
-        <h4
-          className="text-[0.9rem] font-semibold leading-[1.4] text-[#1a1510] group-hover:text-[#8B0000] transition-colors line-clamp-2"
-          style={{ fontFamily: "'Noto Serif Devanagari', Georgia, serif" }}
-        >
+        <h4 className="text-[0.9rem] font-semibold leading-[1.4] text-[#1a1510] group-hover:text-[#8B0000] transition-colors line-clamp-2"
+            style={{ fontFamily: "'Noto Serif Devanagari', Georgia, serif" }}>
           {story.title}
         </h4>
         <p className="text-[0.7rem] text-[#b0a498] mt-1 flex items-center gap-1">
@@ -177,15 +208,22 @@ const RelatedCard = ({ story }) => (
 );
 
 // ─── NEWS DETAIL PAGE ─────────────────────────────────────────────────────────
-const NewsDetailPage = ({
-  article,  // From controller
-  related = [], // From controller
-  slug,
-  ads = {}, // Add ads prop from controller
-}) => {
+const NewsDetailPage = ({ article, related = [], slug, ads = {} }) => {
   const [copied, setCopied] = useState(false);
 
-  // Transform the data
+  // ✅ Measure left column, cap sidebar to same height
+  const mainRef   = useRef(null);
+  const [mainHeight, setMainHeight] = useState(null);
+
+  useEffect(() => {
+    if (!mainRef.current) return;
+    const observer = new ResizeObserver(() => {
+      setMainHeight(mainRef.current?.offsetHeight ?? null);
+    });
+    observer.observe(mainRef.current);
+    return () => observer.disconnect();
+  }, [article]); // re-measure when article changes
+
   const transformedArticle = article ? transformArticle(article) : null;
   const transformedRelated = Array.isArray(related) ? related.map(transformRelated) : [];
 
@@ -193,15 +231,15 @@ const NewsDetailPage = ({
     return (
       <>
         <Head title="समाचार फेला परेन" />
-        <BannerStrip/>
-        <Navbar/>
+        <BannerStrip />
+        <Navbar />
         <div className="bg-[#f5f4f0] min-h-screen py-20">
           <div className="max-w-7xl mx-auto px-3 text-center">
             <h2 className="text-2xl font-bold text-[#8B0000] mb-4">समाचार फेला परेन</h2>
             <Link href="/" className="text-[#8B0000] underline">गृहपृष्ठमा फर्कनुहोस्</Link>
           </div>
         </div>
-        <Footer/>
+        <Footer />
       </>
     );
   }
@@ -211,17 +249,13 @@ const NewsDetailPage = ({
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
-  
 
   return (
     <>
       <Head title={transformedArticle.title} />
-      
-      <BannerStrip/>
-      <TickerStrip/>
-      <Navbar/>
+      <Navbar />
 
-      {/* ── TOP BANNER AD WITH LEADERBOARDBANNER ── */}
+      {/* Top leaderboard banner */}
       <div className="bg-white border-b border-[rgba(0,0,0,0.07)]">
         <div className="max-w-7xl mx-auto px-3 md:px-5 py-3 flex items-center justify-center">
           <LeaderboardBanner />
@@ -229,7 +263,7 @@ const NewsDetailPage = ({
       </div>
 
       <div className="bg-white min-h-screen py-4">
-        <div className="max-w-7xl mx-auto px-3 md:px-5">
+        <div className="px-3 md:px-24">
 
           {/* Breadcrumb */}
           <nav className="flex items-center gap-1.5 text-[0.8rem] text-[#b0a498] mb-3">
@@ -250,27 +284,22 @@ const NewsDetailPage = ({
           <div className="flex gap-5 items-start">
 
             {/* LEFT: ARTICLE CONTENT */}
-            <main className="flex-1 min-w-0 flex flex-col gap-4">
+            <main className="flex-1 min-w-0 flex flex-col gap-4" ref={mainRef}>
 
-              {/* Article card */}
               <article className="bg-white border border-[rgba(0,0,0,0.08)]">
 
                 {/* Category tag + title */}
                 <div className="px-4 md:px-6 pt-5 pb-0">
                   <div className="flex items-center gap-2 mb-3">
-                    <span
-                      className="text-[0.75rem] font-black uppercase px-2 py-0.5 text-white tracking-wider"
-                      style={{ background: transformedArticle.category.color }}
-                    >
+                    <span className="text-[0.75rem] font-black uppercase px-2 py-0.5 text-white tracking-wider"
+                          style={{ background: transformedArticle.category.color }}>
                       {transformedArticle.category.name}
                     </span>
                     <span className="text-[0.8rem] text-[#b0a498]">{transformedArticle.published_at}</span>
                   </div>
 
-                  <h2
-                    className="text-[1.8rem] md:text-[2.2rem] font-extrabold leading-[1.35] text-[#1a1510] mb-4"
-                    style={{ fontFamily: "'Noto Serif Devanagari', Georgia, serif" }}
-                  >
+                  <h2 className="text-[1.8rem] md:text-[2.2rem] font-extrabold leading-[1.35] text-[#1a1510] mb-4"
+                      style={{ fontFamily: "'Noto Serif Devanagari', Georgia, serif" }}>
                     {transformedArticle.title}
                   </h2>
 
@@ -278,22 +307,13 @@ const NewsDetailPage = ({
                   <div className="flex flex-wrap items-center justify-between gap-3 pb-3
                                   border-b border-[rgba(0,0,0,0.07)]">
                     <div className="flex items-center gap-4 text-[0.8rem] text-[#8a7f75]">
-                      <span className="flex items-center gap-1.5">
-                        <UserIcon size={12} />{transformedArticle.author.name}
-                      </span>
-                      <span className="flex items-center gap-1.5">
-                        <ClockIcon size={12} />{transformedArticle.updated_at}
-                      </span>
-                      <span className="flex items-center gap-1.5">
-                        <EyeIcon size={12} />{transformedArticle.views.toLocaleString()}
-                      </span>
+                      <span className="flex items-center gap-1.5"><UserIcon size={12} />{transformedArticle.author.name}</span>
+                      <span className="flex items-center gap-1.5"><ClockIcon size={12} />{transformedArticle.updated_at}</span>
+                      <span className="flex items-center gap-1.5"><EyeIcon size={12} />{transformedArticle.views.toLocaleString()}</span>
                     </div>
-                    {/* Copy link */}
-                    <button
-                      onClick={handleCopy}
-                      className="text-[0.75rem] font-bold px-3 py-1.5 border border-[rgba(0,0,0,0.15)]
-                                 hover:bg-[#f0ede8] transition-colors text-[#6b5f55]"
-                    >
+                    <button onClick={handleCopy}
+                            className="text-[0.75rem] font-bold px-3 py-1.5 border border-[rgba(0,0,0,0.15)]
+                                       hover:bg-[#f0ede8] transition-colors text-[#6b5f55]">
                       {copied ? '✓ कपी भयो' : 'लिंक कपी'}
                     </button>
                   </div>
@@ -302,12 +322,8 @@ const NewsDetailPage = ({
                 {/* Hero image */}
                 {transformedArticle.image && (
                   <div className="relative mt-4 mx-4 md:mx-6 overflow-hidden">
-                    <img
-                      src={transformedArticle.image}
-                      alt={transformedArticle.title}
-                      className="w-full h-auto block"
-                      style={{ maxHeight: 500, objectFit: 'cover' }}
-                    />
+                    <img src={transformedArticle.image} alt={transformedArticle.title}
+                         className="w-full h-auto block" style={{ maxHeight: 500, objectFit: 'cover' }} />
                     {transformedArticle.image_caption && (
                       <p className="text-[0.8rem] text-[#8a7f75] mt-1.5 italic">{transformedArticle.image_caption}</p>
                     )}
@@ -315,12 +331,9 @@ const NewsDetailPage = ({
                 )}
 
                 {/* Body content */}
-                <div
-                  className="px-4 md:px-6 py-5 prose prose-lg max-w-none
-                             text-[1.1rem] text-[#2d2520] leading-[1.85]"
-                  style={{ fontFamily: "'Noto Serif Devanagari', Georgia, serif" }}
-                  dangerouslySetInnerHTML={{ __html: transformedArticle.content }}
-                />
+                <div className="px-4 md:px-6 py-5 prose prose-lg max-w-none text-[1.1rem] text-[#2d2520] leading-[1.85]"
+                     style={{ fontFamily: "'Noto Serif Devanagari', Georgia, serif" }}
+                     dangerouslySetInnerHTML={{ __html: transformedArticle.content }} />
 
                 {/* Social share */}
                 <div className="px-4 md:px-6 py-4 border-t border-[rgba(0,0,0,0.07)] bg-[#faf8f5]">
@@ -332,13 +345,10 @@ const NewsDetailPage = ({
                   <div className="px-4 md:px-6 py-3 border-t border-[rgba(0,0,0,0.07)] flex flex-wrap gap-2">
                     <span className="text-[0.8rem] text-[#8a7f75] font-medium">ट्यागहरू:</span>
                     {transformedArticle.tags.map(tag => (
-                      <Link
-                        key={tag}
-                        href={`/tag/${encodeURIComponent(tag)}`}
-                        className="text-[0.75rem] px-2 py-0.5 bg-[#f0ede8] border border-[rgba(0,0,0,0.1)]
-                                   text-[#6b5f55] hover:bg-[#8B0000] hover:text-white hover:border-[#8B0000]
-                                   transition-all duration-150"
-                      >
+                      <Link key={tag} href={`/tag/${encodeURIComponent(tag)}`}
+                            className="text-[0.75rem] px-2 py-0.5 bg-[#f0ede8] border border-[rgba(0,0,0,0.1)]
+                                       text-[#6b5f55] hover:bg-[#8B0000] hover:text-white hover:border-[#8B0000]
+                                       transition-all duration-150">
                         #{tag}
                       </Link>
                     ))}
@@ -351,10 +361,8 @@ const NewsDetailPage = ({
                 <div>
                   <div className="flex items-center gap-2.5 pb-2 mb-3 border-b-2 border-[#8B0000]">
                     <div className="w-[4px] h-5 bg-[#8B0000] rounded-sm" />
-                    <h2
-                      className="text-[1rem] font-black uppercase tracking-wide text-[#8B0000]"
-                      style={{ fontFamily: "'Noto Serif Devanagari', Georgia, serif" }}
-                    >
+                    <h2 className="text-[1rem] font-black uppercase tracking-wide text-[#8B0000]"
+                        style={{ fontFamily: "'Noto Serif Devanagari', Georgia, serif" }}>
                       सम्बन्धित समाचार
                     </h2>
                   </div>
@@ -366,22 +374,19 @@ const NewsDetailPage = ({
 
             </main>
 
-            {/* RIGHT: STICKY SIDEBAR WITH SIDEBARBANNER */}
-            <aside className="hidden lg:flex flex-col gap-3 w-[268px] flex-shrink-0 sticky top-[68px]">
-
-              {/* Ads label */}
+            {/* RIGHT: SIDEBAR — capped to left column height */}
+            <aside
+              className="hidden lg:flex flex-col gap-3 w-[268px] flex-shrink-0 overflow-hidden"
+              style={{ maxHeight: mainHeight ? `${mainHeight}px` : 'none' }}
+            >
               <div className="flex items-center gap-2">
                 <span className="text-[0.7rem] font-black tracking-[0.18em] uppercase text-[#c0b8b0]">
                   विज्ञापन
                 </span>
               </div>
 
-              {/* Sidebar Banner Component */}
               <SidebarBanner />
 
-             
-
-              {/* More from category */}
               {transformedRelated.length > 0 && (
                 <>
                   <div className="flex items-center gap-2 mt-1">
@@ -393,14 +398,13 @@ const NewsDetailPage = ({
                   {transformedRelated.slice(0, 3).map(s => <RelatedCard key={`sb-${s.id}`} story={s} />)}
                 </>
               )}
-
             </aside>
 
           </div>
         </div>
       </div>
 
-      <Footer/>
+      <Footer />
     </>
   );
 };

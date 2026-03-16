@@ -1,36 +1,36 @@
-
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import {
-    FileDown,
-    User,
-    Calendar,
+   
     Edit,
     Trash,
     Plus,
-    Menu,
-    X,
-    ChevronLeft,
-    ChevronRight,
+
 } from "lucide-react";
 import axios from "axios";
-
-import ReactPaginate from "react-paginate";
 import AdminWrapper from "@/AdminDashboard/AdminWrapper";
 import AddNewsForm from "@/AddFormComponent/AddNewsForm";
 import EditNewsForm from "@/EditFormComponents/EditNewsForm";
+import MyTable from "@/MyTable/MyTable";
 
 const News = () => {
-    const [allNews, setAllNews] = useState([]);
+    const [newsData, setNewsData] = useState({
+        data: [],
+        current_page: 1,
+        last_page: 1,
+        per_page: 10,
+        total: 0
+    });
+    const [loading, setLoading] = useState(false);
+    const [filters, setFilters] = useState({
+        page: 1,
+        per_page: 10
+    });
     const [reloadTrigger, setReloadTrigger] = useState(false);
     const [editingNews, setEditingNews] = useState(null);
     const [showNewsForm, setShowNewsForm] = useState(false);
     const [showEditForm, setShowEditForm] = useState(false);
     const [allCategory, setAllCategory] = useState([]);
-    const [currentPage, setCurrentPage] = useState(0);
     const [isMobileView, setIsMobileView] = useState(false);
-    const [showMobileMenu, setShowMobileMenu] = useState(false);
-
-    const itemsPerPage = 15;
 
     // Check screen size on mount and resize
     useEffect(() => {
@@ -61,21 +61,55 @@ const News = () => {
         }
     };
 
-    // Fetch news from API
+    // Fetch news from API with pagination
     useEffect(() => {
         const fetchNews = async () => {
+            setLoading(true);
             try {
-                const response = await axios.get(route("news.index"));
-                setAllNews(
-                    Array.isArray(response.data.data) ? response.data.data : []
-                );
-                setCurrentPage(0);
+                const response = await axios.get(route("news.index"), {
+                    params: {
+                        page: filters.page,
+                        per_page: filters.per_page
+                    }
+                });
+                
+                console.log("API Response:", response.data);
+                
+                // Handle the paginated response structure
+                if (response.data?.data) {
+                    // Laravel pagination returns data in 'data' property
+                    setNewsData({
+                        data: response.data.data.data || response.data.data,
+                        current_page: response.data.data.current_page || response.data.current_page,
+                        last_page: response.data.data.last_page || response.data.last_page,
+                        per_page: response.data.data.per_page || response.data.per_page,
+                        total: response.data.data.total || response.data.total
+                    });
+                } else {
+                    setNewsData({
+                        data: [],
+                        current_page: 1,
+                        last_page: 1,
+                        per_page: filters.per_page,
+                        total: 0
+                    });
+                }
             } catch (error) {
                 console.error("Error fetching news:", error);
-                setAllNews([]);
+                setNewsData({
+                    data: [],
+                    current_page: 1,
+                    last_page: 1,
+                    per_page: filters.per_page,
+                    total: 0
+                });
+            } finally {
+                setLoading(false);
             }
         };
+        
         fetchNews();
+        
         const fetchCategories = async () => {
             try {
                 const response = await axios.get(route("cate.index"));
@@ -88,7 +122,7 @@ const News = () => {
             }
         };
         fetchCategories();
-    }, [reloadTrigger]);
+    }, [reloadTrigger, filters.page, filters.per_page]);
 
     // Delete news
     const handleDelete = async (id) => {
@@ -131,14 +165,76 @@ const News = () => {
         }
     };
 
-    // Pagination logic
-    const offset = currentPage * itemsPerPage;
-    const currentNews = allNews.slice(offset, offset + itemsPerPage);
-    const pageCount = Math.ceil(allNews.length / itemsPerPage);
-
-    const handlePageChange = ({ selected }) => {
-        setCurrentPage(selected);
+    // Handle page change
+    const handlePageChange = (newPage) => {
+        setFilters(prev => ({
+            ...prev,
+            page: newPage
+        }));
     };
+
+    // Handle per page change
+    const handlePerPageChange = (newPerPage) => {
+        setFilters(prev => ({
+            ...prev,
+            per_page: newPerPage,
+            page: 1 // Reset to first page when changing items per page
+        }));
+    };
+
+    // Define table columns
+    const columns = useMemo(
+        () => [
+            {
+                Header: "S.no",
+                accessor: (row, index) => index + 1 + ((filters.page - 1) * filters.per_page),
+                Cell: ({ row }) => <span>{row.index + 1 + ((filters.page - 1) * filters.per_page)}</span>,
+            },
+            {
+                Header: "Heading",
+                accessor: "heading",
+                Cell: ({ value }) => (
+                    <div className="max-w-xs" title={value}>
+                        {truncateText(value, isMobileView ? 30 : 50)}
+                    </div>
+                ),
+            },
+            {
+                Header: "Description",
+                accessor: "description",
+                Cell: ({ value }) => (
+                    <div className="max-w-md" title={value}>
+                        {truncateText(value, isMobileView ? 50 : 70)}
+                    </div>
+                ),
+            },
+            {
+                Header: "Actions",
+                accessor: "actions",
+                Cell: ({ row }) => (
+                    <div className="flex flex-col md:flex-row gap-1 md:gap-2">
+                        <button
+                            onClick={() => handleEdit(row.original)}
+                            className="text-blue-600 hover:text-blue-900 flex items-center text-sm"
+                        >
+                            <Edit size={14} className="mr-1" />
+                            Edit
+                        </button>
+                        <button
+                            onClick={() => handleDelete(row.original.id)}
+                            className="text-red-600 hover:text-red-900 flex items-center text-sm"
+                        >
+                            <Trash size={14} className="mr-1" />
+                            Delete
+                        </button>
+                    </div>
+                ),
+            },
+        ],
+        [isMobileView, filters.page, filters.per_page]
+    );
+
+    console.log("newsData", newsData); // Debug: check what data is being set
 
     return (
         <AdminWrapper>
@@ -149,6 +245,11 @@ const News = () => {
                         <h1 className="text-2xl md:text-3xl font-bold text-gray-800">
                             News Management
                         </h1>
+                        {newsData.total > 0 && (
+                            <span className="ml-4 text-sm text-gray-500">
+                                Total: {newsData.total} articles
+                            </span>
+                        )}
                     </div>
                     <button
                         onClick={() => {
@@ -201,256 +302,27 @@ const News = () => {
                     </div>
                 )}
 
-                {/* News Table */}
-                <div className="bg-white rounded-xl shadow-md overflow-hidden mt-4 md:mt-6">
-                    {isMobileView ? (
-                        // Mobile view - card layout
-                        <div className="divide-y divide-gray-200">
-                            {currentNews.length > 0 ? (
-                                currentNews.map((item, index) => (
-                                    <div
-                                        key={item.id}
-                                        className="p-4 hover:bg-gray-50"
-                                    >
-                                        <div className="flex justify-between items-start mb-2">
-                                            <span className="text-sm text-gray-500">
-                                                S.no {offset + index + 1}
-                                            </span>
-                                            <div className="flex gap-2">
-                                                <button
-                                                    onClick={() =>
-                                                        handleEdit(item)
-                                                    }
-                                                    className="text-blue-600 hover:text-blue-900 p-1"
-                                                    aria-label="Edit"
-                                                >
-                                                    <Edit size={16} />
-                                                </button>
-                                                <button
-                                                    onClick={() =>
-                                                        handleDelete(item.id)
-                                                    }
-                                                    className="text-red-600 hover:text-red-900 p-1"
-                                                    aria-label="Delete"
-                                                >
-                                                    <Trash size={16} />
-                                                </button>
-                                            </div>
-                                        </div>
-
-                                        <h3
-                                            className="font-medium text-gray-900 mb-2"
-                                            title={item.heading}
-                                        >
-                                            {truncateText(item.heading, 60)}
-                                        </h3>
-
-                                        <p
-                                            className="text-sm text-gray-600 mb-3"
-                                            title={item.description}
-                                        >
-                                            {truncateText(
-                                                item.description,
-                                                100
-                                            )}
-                                        </p>
-
-                                        <div className="flex justify-between text-sm text-gray-500">
-                                            <div className="flex items-center">
-                                                <Calendar
-                                                    size={14}
-                                                    className="mr-1"
-                                                />
-                                                <span>
-                                                    {new Date(
-                                                        item.published_at
-                                                    ).toLocaleDateString(
-                                                        "en-US",
-                                                        {
-                                                            year: "numeric",
-                                                            month: "short",
-                                                            day: "numeric",
-                                                        }
-                                                    )}
-                                                </span>
-                                            </div>
-                                        </div>
-
-                                        <div
-                                            className="mt-2 text-sm text-blue-600 truncate"
-                                            title={item.image}
-                                        >
-                                            {truncateText(
-                                                item.image?.trim(),
-                                                30
-                                            )}
-                                        </div>
-                                    </div>
-                                ))
-                            ) : (
-                                <div className="px-6 py-4 text-center text-gray-500">
-                                    No news articles found.
-                                </div>
-                            )}
-                        </div>
-                    ) : (
-                        // Tablet/Desktop view - table layout
-                        <div className="overflow-x-auto">
-                            <table className="min-w-full divide-y divide-gray-200">
-                                <thead className="bg-gray-50">
-                                    <tr>
-                                        <th className="px-3 md:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                            S.no
-                                        </th>
-                                        <th className="px-3 md:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                            Heading
-                                        </th>
-                                        <th className="px-3 md:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell">
-                                            Description
-                                        </th>
-                                        <th className="px-3 md:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                            Published Date
-                                        </th>
-                                        <th className="px-3 md:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                            Image Path
-                                        </th>
-                                        <th className="px-3 md:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                            Actions
-                                        </th>
-                                    </tr>
-                                </thead>
-                                <tbody className="bg-white divide-y divide-gray-200">
-                                    {currentNews.length > 0 ? (
-                                        currentNews.map((item, index) => (
-                                            <tr
-                                                key={item.id}
-                                                className="hover:bg-gray-50"
-                                            >
-                                                <td className="px-3 md:px-6 py-4 text-sm text-gray-900">
-                                                    {offset + index + 1}
-                                                </td>
-                                                <td className="px-3 md:px-6 py-4">
-                                                    <div
-                                                        className="text-sm font-medium text-gray-900 max-w-xs md:max-w-sm"
-                                                        title={item.heading}
-                                                    >
-                                                        {truncateText(
-                                                            item.heading,
-                                                            window.innerWidth <
-                                                                1024
-                                                                ? 30
-                                                                : 50
-                                                        )}
-                                                    </div>
-                                                </td>
-                                                <td className="px-3 md:px-6 py-4 hidden md:table-cell">
-                                                    <div
-                                                        className="text-sm text-gray-900 max-w-xs lg:max-w-md"
-                                                        title={item.description}
-                                                    >
-                                                        {truncateText(
-                                                            item.description,
-                                                            window.innerWidth <
-                                                                1024
-                                                                ? 50
-                                                                : 70
-                                                        )}
-                                                    </div>
-                                                </td>
-                                                <td className="px-3 md:px-6 py-4 whitespace-nowrap">
-                                                    <div className="text-sm text-gray-900">
-                                                        {new Date(
-                                                            item.published_at
-                                                        ).toLocaleDateString(
-                                                            "en-US",
-                                                            {
-                                                                year: "numeric",
-                                                                month: "short",
-                                                                day: "numeric",
-                                                            }
-                                                        )}
-                                                    </div>
-                                                </td>
-                                                <td className="px-3 md:px-6 py-4">
-                                                    <div
-                                                        className="text-sm text-blue-600 max-w-xs truncate"
-                                                        title={item.image}
-                                                    >
-                                                        {truncateText(
-                                                            item.image?.trim(),
-                                                            window.innerWidth <
-                                                                1024
-                                                                ? 20
-                                                                : 40
-                                                        )}
-                                                    </div>
-                                                </td>
-                                                <td className="px-3 md:px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                                    <div className="flex flex-col md:flex-row gap-1 md:gap-2">
-                                                        <button
-                                                            onClick={() =>
-                                                                handleEdit(item)
-                                                            }
-                                                            className="text-blue-600 hover:text-blue-900 flex items-center"
-                                                        >
-                                                            <Edit
-                                                                size={14}
-                                                                className="mr-1"
-                                                            />
-                                                            Edit
-                                                        </button>
-                                                        <button
-                                                            onClick={() =>
-                                                                handleDelete(
-                                                                    item.id
-                                                                )
-                                                            }
-                                                            className="text-red-600 hover:text-red-900 flex items-center"
-                                                        >
-                                                            <Trash
-                                                                size={14}
-                                                                className="mr-1"
-                                                            />
-                                                            Delete
-                                                        </button>
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        ))
-                                    ) : (
-                                        <tr>
-                                            <td
-                                                colSpan="6"
-                                                className="px-6 py-4 text-center text-gray-500"
-                                            >
-                                                No news articles found.
-                                            </td>
-                                        </tr>
-                                    )}
-                                </tbody>
-                            </table>
-                        </div>
-                    )}
-                </div>
-                {/* Pagination */}
-                {pageCount > 1 && (
-                    <div className="flex justify-center mt-4 md:mt-6 p-3 md:p-4">
-                        <ReactPaginate
-                            previousLabel={<ChevronLeft size={16} />}
-                            nextLabel={<ChevronRight size={16} />}
-                            breakLabel="..."
-                            pageCount={pageCount}
-                            marginPagesDisplayed={isMobileView ? 1 : 2}
-                            pageRangeDisplayed={isMobileView ? 2 : 5}
-                            onPageChange={handlePageChange}
-                            containerClassName="pagination flex gap-1 text-sm"
-                            activeClassName="bg-red-600 text-white"
-                            pageLinkClassName="block px-2 md:px-3 py-1 border border-gray-300 rounded hover:bg-red-50 hover:text-red-700 transition"
-                            previousLinkClassName="block px-2 md:px-3 py-1 border border-gray-300 rounded hover:bg-red-50 hover:text-red-700 transition flex items-center"
-                            nextLinkClassName="block px-2 md:px-3 py-1 border border-gray-300 rounded hover:bg-red-50 hover:text-red-700 transition flex items-center"
-                            disabledClassName="opacity-50 cursor-not-allowed"
-                            forcePage={currentPage}
-                        />
+                {/* News Table with Loading State */}
+                {loading ? (
+                    <div className="bg-white rounded-xl shadow-md p-8 text-center text-gray-500 mt-6">
+                        Loading news articles...
+                    </div>
+                ) : newsData.data.length > 0 ? (
+                    <MyTable 
+                        columns={columns} 
+                        data={newsData.data}
+                        pagination={{
+                            currentPage: newsData.current_page,
+                            lastPage: newsData.last_page,
+                            perPage: newsData.per_page,
+                            total: newsData.total,
+                            onPageChange: handlePageChange,
+                            onPerPageChange: handlePerPageChange
+                        }}
+                    />
+                ) : (
+                    <div className="bg-white rounded-xl shadow-md p-8 text-center text-gray-500 mt-6">
+                        No news articles found.
                     </div>
                 )}
             </div>

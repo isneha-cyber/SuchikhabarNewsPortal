@@ -1,12 +1,11 @@
-
-import React, { useEffect, useState } from "react";
-import { ChevronLeft, ChevronRight, Edit, Plus, Trash } from "lucide-react";
+import React, { useEffect, useState, useMemo } from "react";
+import { Edit, Plus, Trash } from "lucide-react";
 import axios from "axios";
 
-import ReactPaginate from "react-paginate";
 import AdminWrapper from "@/AdminDashboard/AdminWrapper";
 import AddCategoryForm from "@/AddFormComponent/AddCategoryForm";
 import EditCategoryForm from "@/EditFormComponents/EditCategoryForm";
+import MyTable from "@/MyTable/MyTable";
 
 const Category = () => {
     const [allCategory, setAllCategory] = useState([]);
@@ -15,8 +14,8 @@ const Category = () => {
     const [showAddForm, setShowAddForm] = useState(false);
     const [showEditForm, setShowEditForm] = useState(false);
     const [loading, setLoading] = useState(true);
-    const [currentPage, setCurrentPage] = useState(0);
-    const itemsPerPage = 15;
+    const [currentPage, setCurrentPage] = useState(1); // Start from 1 for MyTable
+    const [perPage, setPerPage] = useState(15);
 
     useEffect(() => {
         const fetchCategory = async () => {
@@ -24,7 +23,7 @@ const Category = () => {
             try {
                 const response = await axios.get(route("cate.index"));
                 setAllCategory(response.data.data || []);
-                setCurrentPage(0);
+                setCurrentPage(1);
             } catch (error) {
                 console.error("Error fetching category:", error);
                 setAllCategory([]);
@@ -52,13 +51,62 @@ const Category = () => {
         setShowEditForm(true);
     };
 
-    const offset = currentPage * itemsPerPage;
-    const currentCategories = allCategory.slice(offset, offset + itemsPerPage);
-    const pageCount = Math.ceil(allCategory.length / itemsPerPage);
+    // Calculate pagination
+    const offset = (currentPage - 1) * perPage;
+    const currentCategories = allCategory.slice(offset, offset + perPage);
+    const lastPage = Math.ceil(allCategory.length / perPage);
 
-    const handlePageChange = ({ selected }) => {
-        setCurrentPage(selected);
+    // Handle page change
+    const handlePageChange = (page) => {
+        setCurrentPage(page);
     };
+
+    // Handle per page change
+    const handlePerPageChange = (newPerPage) => {
+        setPerPage(newPerPage);
+        setCurrentPage(1); // Reset to first page when changing items per page
+    };
+
+    // Define table columns
+    const columns = useMemo(
+        () => [
+            {
+                Header: "ID",
+                accessor: (row, index) => offset + index + 1,
+                id: "id"
+            },
+            {
+                Header: "Name",
+                accessor: "name",
+            },
+            {
+                Header: "Actions",
+                accessor: "actions",
+                Cell: ({ row }) => (
+                    <div className="flex gap-2">
+                        <button
+                            onClick={() => handleEdit(row.original)}
+                            className="text-blue-600 hover:text-blue-900 flex items-center px-2 py-1 rounded-md hover:bg-blue-50 transition-colors"
+                            aria-label={`Edit category ${row.original.name}`}
+                        >
+                            <Edit size={14} className="mr-1" />
+                            <span className="hidden sm:inline">Edit</span>
+                        </button>
+                        <button
+                            onClick={() => handleDelete(row.original.id)}
+                            className="text-red-600 hover:text-red-900 flex items-center px-2 py-1 rounded-md hover:bg-red-50 transition-colors"
+                            aria-label={`Delete category ${row.original.name}`}
+                        >
+                            <Trash size={14} className="mr-1" />
+                            <span className="hidden sm:inline">Delete</span>
+                        </button>
+                    </div>
+                ),
+            },
+        ],
+        [offset] // Recalculate when offset changes
+    );
+
     return (
         <AdminWrapper>
             <div className="">
@@ -77,18 +125,6 @@ const Category = () => {
                         <span>Add Category</span>
                     </button>
                 </div>
-                {/* <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 sm:mb-8 gap-4">
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-800">
-            Category Management
-          </h1>
-          <button
-            onClick={() => setShowAddForm(true)}
-            className="py-2 px-4 sm:py-3 sm:px-6 bg-red-600 hover:bg-red-700 text-white font-medium rounded-lg shadow transition duration-200 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 flex items-center justify-center gap-2 text-sm sm:text-base"
-          >
-            <span className="hidden sm:inline">+ Add Category</span>
-            <span className="sm:hidden">+ Add</span>
-          </button>
-        </div> */}
 
                 {/* Add Category Form Modal */}
                 {showAddForm && (
@@ -118,119 +154,24 @@ const Category = () => {
                     </div>
                 )}
 
-                {/* Responsive Category Table */}
-                <div className="bg-white rounded-xl shadow-md overflow-hidden">
-                    <div className="overflow-x-auto">
-                        <table className="min-w-full divide-y divide-gray-200 table-auto">
-                            <thead className="bg-gray-50">
-                                <tr>
-                                    <th className="px-2 sm:px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
-                                        ID
-                                    </th>
-                                    <th className="px-2 sm:px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                        Name
-                                    </th>
-                                    <th className="px-2 sm:px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
-                                        Actions
-                                    </th>
-                                </tr>
-                            </thead>
-                            <tbody className="bg-white divide-y divide-gray-200">
-                                {loading ? (
-                                    <tr>
-                                        <td
-                                            colSpan="3"
-                                            className="px-4 py-4 text-center text-gray-500"
-                                        >
-                                            Loading categories...
-                                        </td>
-                                    </tr>
-                                ) : currentCategories.length > 0 ? (
-                                    currentCategories.map((item, index) => (
-                                        <tr
-                                            key={item.id}
-                                            className="hover:bg-gray-50"
-                                        >
-                                            <td className="px-2 sm:px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">
-                                                {offset + index + 1}
-                                            </td>
-                                            <td className="px-2 sm:px-4 py-3 text-sm text-gray-900">
-                                                {item.name}
-                                            </td>
-                                            <td className="px-2 sm:px-4 py-3 whitespace-nowrap text-sm font-medium">
-                                                <div className="flex gap-2">
-                                                    <button
-                                                        onClick={() =>
-                                                            handleEdit(item)
-                                                        }
-                                                        className="text-blue-600 hover:text-blue-900 flex items-center px-2 py-1 rounded-md hover:bg-blue-50 transition-colors"
-                                                        aria-label={`Edit category ${item.name}`}
-                                                    >
-                                                        <Edit
-                                                            size={14}
-                                                            className="mr-1"
-                                                        />
-                                                        <span className="hidden sm:inline">
-                                                            Edit
-                                                        </span>
-                                                    </button>
-                                                    <button
-                                                        onClick={() =>
-                                                            handleDelete(
-                                                                item.id
-                                                            )
-                                                        }
-                                                        className="text-red-600 hover:text-red-900 flex items-center px-2 py-1 rounded-md hover:bg-red-50 transition-colors"
-                                                        aria-label={`Delete category ${item.name}`}
-                                                    >
-                                                        <Trash
-                                                            size={14}
-                                                            className="mr-1"
-                                                        />
-                                                        <span className="hidden sm:inline">
-                                                            Delete
-                                                        </span>
-                                                    </button>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    ))
-                                ) : (
-                                    <tr>
-                                        <td
-                                            colSpan="3"
-                                            className="px-4 py-4 text-center text-gray-500"
-                                        >
-                                            No categories found.
-                                        </td>
-                                    </tr>
-                                )}
-                            </tbody>
-                        </table>
+                {/* MyTable Component */}
+                {loading ? (
+                    <div className="bg-white rounded-xl shadow-md p-8 text-center text-gray-500">
+                        Loading categories...
                     </div>
-
-                    {/* Pagination */}
-                    {pageCount > 1 && (
-                        <div className="flex justify-center mt-4 p-4">
-                            <ReactPaginate
-                                previousLabel={<ChevronLeft size={16} />}
-                                nextLabel={<ChevronRight size={16} />}
-                                breakLabel="..."
-                                pageCount={pageCount}
-                                marginPagesDisplayed={1}
-                                pageRangeDisplayed={3}
-                                onPageChange={handlePageChange}
-                                containerClassName="pagination flex flex-wrap gap-1 text-sm"
-                                activeClassName="bg-red-600 text-white"
-                                pageLinkClassName="block px-3 py-2 border border-gray-300 rounded hover:bg-red-50 hover:text-red-700 transition min-w-[2.5rem] text-center"
-                                previousLinkClassName="block px-3 py-2 border border-gray-300 rounded hover:bg-red-50 hover:text-red-700 transition"
-                                nextLinkClassName="block px-3 py-2 border border-gray-300 rounded hover:bg-red-50 hover:text-red-700 transition"
-                                disabledClassName="opacity-50 cursor-not-allowed"
-                                forcePage={currentPage}
-                            />
-                        </div>
-                    )}
-                </div>
+                ) : (
+                    <MyTable
+                        columns={columns}
+                        data={currentCategories}
+                        pagination={{
+                            currentPage,
+                            lastPage,
+                            perPage,
+                            onPageChange: handlePageChange,
+                            onPerPageChange: handlePerPageChange
+                        }}
+                    />
+                )}
             </div>
         </AdminWrapper>
     );

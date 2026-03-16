@@ -1,206 +1,396 @@
-
-
-import React, { useState, useEffect } from "react";
+import React from "react";
 import { Link, usePage } from "@inertiajs/react";
 import {
-    Home,
-    Users,
-    LogOut,
-    Image,
-    User,
-    Newspaper,
     X,
-    List,
+    Menu,
+    Image,
     FileText,
-    Archive
+    Calendar,
+    Users,
+    LayoutDashboard,
+    List,
+    Newspaper,
+    Users2,
 } from "lucide-react";
-import axios from "axios";
 
-const AdminSidebar = ({ isOpen, toggleSidebar }) => {
+const SideBar = ({
+    isMobileOpen,
+    onMobileToggle,
+    isCollapsed,
+    onToggleCollapse,
+}) => {
     const { url } = usePage();
-    const [activeLink, setActiveLink] = useState("");
+    const currentPath = url.split("/")[1];
 
-    useEffect(() => {
-        setActiveLink(url);
-    }, [url]);
-
-    const isActiveLink = (path) => {
-        return activeLink.startsWith(path)
-            ? "bg-blue-100 text-blue-600"
-            : "text-gray-600 hover:bg-gray-100 hover:text-gray-900";
+    const isActive = (href) => {
+        const path = href.replace("/", "");
+        return currentPath === path;
     };
 
-    const handleLogout = () => {
-        axios
-            .post(route("logout"))
-            .then((response) => {
-                if (response.data.redirect) {
-                    window.location.href = response.data.redirect;
-                } else {
-                    window.location.href = "/login";
-                }
-            })
-            .catch((error) => {
-                console.error("Logout error:", error);
-            });
-    };
+    // Get authenticated user from auth prop
+    const { auth } = usePage().props;
+    const user = auth?.user;
+
+    // Check The Role of the User
+    const isAdmin = user?.role === "admin";
 
     return (
         <>
-            {/* Backdrop for mobile and tablet */}
-            {isOpen && (
+            {isMobileOpen && (
                 <div
                     className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
-                    onClick={toggleSidebar}
-                ></div>
+                    onClick={onMobileToggle}
+                />
             )}
 
-            
-            <aside
-                className={`fixed top-0 left-0 z-50 h-screen bg-slate-50 text-slate-800 transform transition-transform duration-300 ease-in-out w-64 ${
-                    isOpen
-                        ? "translate-x-0"
-                        : "-translate-x-full lg:translate-x-0"
-                }`}
+            <div
+                className={`
+                    fixed left-0 top-0 h-screen bg-white border-r border-gray-200 z-50 transition-all duration-300
+                    ${isCollapsed ? "w-16" : "w-64"}
+                    ${
+                        isMobileOpen
+                            ? "translate-x-0"
+                            : "-translate-x-full lg:translate-x-0"
+                    }
+                `}
             >
-                <div className="relative flex justify-between items-center p-4 md:p-6">
-                    <img
-                        src="../logo.png"
-                        alt="SuchiKhabar"
-                        className="w-full h-12 md:h-16 object-contain"
-                    />
-                    {/* Close button for mobile and tablet */}
-                    <button
-                        onClick={toggleSidebar}
-                        className="absolute top-2 right-2 lg:hidden p-2 rounded-full hover:bg-gray-200"
-                    >
-                        <X size={20} />
-                    </button>
+                {/* Header */}
+                <div
+                    className={`flex items-center justify-between p-4 border-b h-16 ${
+                        isCollapsed ? "px-3" : ""
+                    }`}
+                >
+                    {!isCollapsed && (
+                        <Link
+                            href="/"
+                            className="flex items-center whitespace-nowrap"
+                        >
+                            <img
+                                src="/images/logo.png"
+                                alt="SuchiKhabar"
+                                className="h-8 w-auto"
+                            />
+                        </Link>
+                    )}
+                    <div className="flex items-center space-x-1">
+                        {/* Collapse Toggle Button - Only show on desktop */}
+                        <button
+                            onClick={onToggleCollapse}
+                            className="hidden lg:flex p-1.5 hover:bg-gray-100 rounded-lg transition-colors duration-200"
+                            title={
+                                isCollapsed
+                                    ? "Expand sidebar"
+                                    : "Collapse sidebar"
+                            }
+                        >
+                            <Menu className="w-4 h-4 text-gray-600" />
+                        </button>
+
+                        {/* Mobile Close Button */}
+                        <button
+                            onClick={onMobileToggle}
+                            className="lg:hidden p-1.5 hover:bg-gray-100 rounded-lg transition-colors duration-200"
+                        >
+                            <X className="w-4 h-4" />
+                        </button>
+                    </div>
                 </div>
 
-                {/* Navigation */}
-                <nav className="flex-1 px-2 md:px-4 space-y-1 mt-4 overflow-y-auto h-[calc(100vh-10rem)]">
+                {/* Menu Items */}
+                <div
+                    className={`p-2 space-y-1 ${isCollapsed ? "px-2" : "px-3"}`}
+                >
+                    {/* Dashboard */}
                     <Link
-                        href="/home"
-                        className={`flex items-center gap-3 px-3 py-2 md:px-4 md:py-3 rounded-xl transition-all w-full text-sm md:text-base ${isActiveLink(
-                            "/home"
-                        )}`}
-                        onClick={() =>
-                            window.innerWidth < 1024 && toggleSidebar()
-                        }
+                        href="/dashboard"
+                        className={`
+                            flex items-center rounded-lg transition-colors duration-200 group relative
+                            ${isCollapsed ? "p-3 justify-center" : "p-3"}
+                            ${
+                                isActive("/dashboard")
+                                    ? "bg-gray-200 text-gray-600 "
+                                    : "text-gray-600 hover:bg-gray-50"
+                            }
+                        `}
+                        title={isCollapsed ? "Dashboard" : ""}
                     >
-                        <Home size={18} className="md:w-5 md:h-5" />
-                        <span className="font-medium">Home</span>
+                        <LayoutDashboard
+                            className={`
+                            ${isCollapsed ? "w-5 h-5" : "w-5 h-5"}
+                            ${
+                                isActive("/dashboard")
+                                    ? "text-gray-600"
+                                    : "text-gray-500 group-hover:text-gray-700"
+                            }
+                        `}
+                        />
+                        {!isCollapsed && (
+                            <span className="ml-3 font-medium whitespace-nowrap">
+                                Dashboard
+                            </span>
+                        )}
+                        {isCollapsed && (
+                            <div className="absolute left-full ml-2 px-2 py-1 bg-gray-900 text-white text-sm rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50">
+                                Dashboard
+                            </div>
+                        )}
                     </Link>
 
+                    {/* Category */}
                     <Link
                         href="/category"
-                        className={`flex items-center gap-3 px-3 py-2 md:px-4 md:py-3 rounded-xl transition-all w-full text-sm md:text-base ${isActiveLink(
-                            "/category"
-                        )}`}
-                        onClick={() =>
-                            window.innerWidth < 1024 && toggleSidebar()
-                        }
+                        className={`
+                            flex items-center rounded-lg transition-colors duration-200 group relative
+                            ${isCollapsed ? "p-3 justify-center" : "p-3"}
+                            ${
+                                isActive("/category")
+                                    ? "bg-gray-200 text-gray-600 "
+                                    : "text-gray-600 hover:bg-gray-50"
+                            }
+                        `}
+                        title={isCollapsed ? "Category" : ""}
                     >
-                        <List size={18} className="md:w-5 md:h-5" />
-                        <span className="font-medium">Categories</span>
+                        <List
+                            className={`
+                            ${isCollapsed ? "w-5 h-5" : "w-5 h-5"}
+                            ${
+                                isActive("/category")
+                                    ? "text-gray-600"
+                                    : "text-gray-500 group-hover:text-gray-700"
+                            }
+                        `}
+                        />
+                        {!isCollapsed && (
+                            <span className="ml-3 font-medium whitespace-nowrap">
+                                Category
+                            </span>
+                        )}
+                        {isCollapsed && (
+                            <div className="absolute left-full ml-2 px-2 py-1 bg-gray-900 text-white text-sm rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50">
+                                Category
+                            </div>
+                        )}
                     </Link>
 
+                    {/* Article */}
                     <Link
                         href="/article"
-                        className={`flex items-center gap-3 px-3 py-2 md:px-4 md:py-3 rounded-xl transition-all w-full text-sm md:text-base ${isActiveLink(
-                            "/article"
-                        )}`}
-                        onClick={() =>
-                            window.innerWidth < 1024 && toggleSidebar()
-                        }
+                        className={`
+                            flex items-center rounded-lg transition-colors duration-200 group relative
+                            ${isCollapsed ? "p-3 justify-center" : "p-3"}
+                            ${
+                                isActive("/article")
+                                    ? "bg-gray-200 text-gray-600"
+                                    : "text-gray-600 hover:bg-gray-50"
+                            }
+                        `}
+                        title={isCollapsed ? "Article" : ""}
                     >
-                        <Newspaper size={18} className="md:w-5 md:h-5" />
-                        <span className="font-medium">News Articles</span>
+                        <Newspaper
+                            className={`
+                            ${isCollapsed ? "w-5 h-5" : "w-5 h-5"}
+                            ${
+                                isActive("/article")
+                                    ? "text-gray-600"
+                                    : "text-gray-500 group-hover:text-gray-700"
+                            }
+                        `}
+                        />
+                        {!isCollapsed && (
+                            <span className="ml-3 font-medium whitespace-nowrap">
+                                Article
+                            </span>
+                        )}
+                        {isCollapsed && (
+                            <div className="absolute left-full ml-2 px-2 py-1 bg-gray-900 text-white text-sm rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50">
+                                Article
+                            </div>
+                        )}
                     </Link>
-                    
+
+                    {/* Banners */}
                     <Link
                         href="/banners"
-                        className={`flex items-center gap-3 px-3 py-2 md:px-4 md:py-3 rounded-xl transition-all w-full text-sm md:text-base ${isActiveLink(
-                            "/banners"
-                        )}`}
-                        onClick={() =>
-                            window.innerWidth < 1024 && toggleSidebar()
-                        }
+                        className={`
+                            flex items-center rounded-lg transition-colors duration-200 group relative
+                            ${isCollapsed ? "p-3 justify-center" : "p-3"}
+                            ${
+                                isActive("/banners")
+                                    ? "bg-gray-200 text-gray-600"
+                                    : "text-gray-600 hover:bg-gray-50"
+                            }
+                        `}
+                        title={isCollapsed ? "Banners" : ""}
                     >
-                        <Image size={18} className="md:w-5 md:h-5" />
-                        <span className="font-medium">Banners</span>
+                        <Image
+                            className={`
+                            ${isCollapsed ? "w-5 h-5" : "w-5 h-5"}
+                            ${
+                                isActive("/banners")
+                                    ? "text-gray-600"
+                                    : "text-gray-500 group-hover:text-gray-700"
+                            }
+                        `}
+                        />
+                        {!isCollapsed && (
+                            <span className="ml-3 font-medium whitespace-nowrap">
+                                Banners
+                            </span>
+                        )}
+                        {isCollapsed && (
+                            <div className="absolute left-full ml-2 px-2 py-1 bg-gray-900 text-white text-sm rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50">
+                                Banners
+                            </div>
+                        )}
                     </Link>
-                    
+
+                    {/* heading */}
                     <Link
                         href="/heading"
-                        className={`flex items-center gap-3 px-3 py-2 md:px-4 md:py-3 rounded-xl transition-all w-full text-sm md:text-base ${isActiveLink(
-                            "/heading"
-                        )}`}
-                        onClick={() =>
-                            window.innerWidth < 1024 && toggleSidebar()
-                        }
+                        className={`
+                            flex items-center rounded-lg transition-colors duration-200 group relative
+                            ${isCollapsed ? "p-3 justify-center" : "p-3"}
+                            ${
+                                isActive("/heading")
+                                    ? "bg-gray-200 text-gray-600"
+                                    : "text-gray-600 hover:bg-gray-50"
+                            }
+                        `}
+                        title={isCollapsed ? "Headings" : ""}
                     >
-                        <FileText size={18} className="md:w-5 md:h-5" />
-                        <span className="font-medium">Headings</span>
+                        <FileText
+                            className={`
+                            ${isCollapsed ? "w-5 h-5" : "w-5 h-5"}
+                            ${
+                                isActive("/heading")
+                                    ? "text-gray-600"
+                                    : "text-gray-500 group-hover:text-gray-700"
+                            }
+                        `}
+                        />
+                        {!isCollapsed && (
+                            <span className="ml-3 font-medium whitespace-nowrap">
+                                Headings
+                            </span>
+                        )}
+                        {isCollapsed && (
+                            <div className="absolute left-full ml-2 px-2 py-1 bg-gray-900 text-white text-sm rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50">
+                                Headings
+                            </div>
+                        )}
                     </Link>
 
+                    {/* Team Members */}
                     <Link
                         href="/teams"
-                        className={`flex items-center gap-3 px-3 py-2 md:px-4 md:py-3 rounded-xl transition-all w-full text-sm md:text-base ${isActiveLink(
-                            "/teams"
-                        )}`}
-                        onClick={() =>
-                            window.innerWidth < 1024 && toggleSidebar()
-                        }
+                        className={`
+                            flex items-center rounded-lg transition-colors duration-200 group relative
+                            ${isCollapsed ? "p-3 justify-center" : "p-3"}
+                            ${
+                                isActive("/teams")
+                                    ? "bg-gray-200 text-gray-600 "
+                                    : "text-gray-600 hover:bg-gray-50"
+                            }
+                        `}
+                        title={isCollapsed ? "Team Members" : ""}
                     >
-                        <Users size={18} className="md:w-5 md:h-5" />
-                        <span className="font-medium">Team Members</span>
+                        <Users
+                            className={`
+                            ${isCollapsed ? "w-5 h-5" : "w-5 h-5"}
+                            ${
+                                isActive("/teams")
+                                    ? "text-gray-600"
+                                    : "text-gray-500 group-hover:text-gray-700"
+                            }
+                        `}
+                        />
+                        {!isCollapsed && (
+                            <span className="ml-3 font-medium whitespace-nowrap">
+                                Team Members
+                            </span>
+                        )}
+                        {isCollapsed && (
+                            <div className="absolute left-full ml-2 px-2 py-1 bg-gray-900 text-white text-sm rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50">
+                                Team Members
+                            </div>
+                        )}
                     </Link>
 
+                    {/* Users */}
                     <Link
                         href="/user"
-                        className={`flex items-center gap-3 px-3 py-2 md:px-4 md:py-3 rounded-xl transition-all w-full text-sm md:text-base ${isActiveLink(
-                            "/user"
-                        )}`}
-                        onClick={() =>
-                            window.innerWidth < 1024 && toggleSidebar()
-                        }
+                        className={`
+                            flex items-center rounded-lg transition-colors duration-200 group relative
+                            ${isCollapsed ? "p-3 justify-center" : "p-3"}
+                            ${
+                                isActive("/user")
+                                    ? "bg-gray-200 text-gray-600 "
+                                    : "text-gray-600 hover:bg-gray-50"
+                            }
+                        `}
+                        title={isCollapsed ? "Users" : ""}
                     >
-                        <User size={18} className="md:w-5 md:h-5" />
-                        <span className="font-medium">Users</span>
+                        <Users2
+                            className={`
+                            ${isCollapsed ? "w-5 h-5" : "w-5 h-5"}
+                            ${
+                                isActive("/user")
+                                    ? "text-gray-600"
+                                    : "text-gray-500 group-hover:text-gray-700"
+                            }
+                        `}
+                        />
+                        {!isCollapsed && (
+                            <span className="ml-3 font-medium whitespace-nowrap">
+                                Users
+                            </span>
+                        )}
+                        {isCollapsed && (
+                            <div className="absolute left-full ml-2 px-2 py-1 bg-gray-900 text-white text-sm rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50">
+                                Users
+                            </div>
+                        )}
                     </Link>
 
+                    {/* Activity Logs */}
                     <Link
                         href="/log"
-                        className={`flex items-center gap-3 px-3 py-2 md:px-4 md:py-3 rounded-xl transition-all w-full text-sm md:text-base ${isActiveLink(
-                            "/log"
-                        )}`}
-                        onClick={() =>
-                            window.innerWidth < 1024 && toggleSidebar()
-                        }
+                        className={`
+                            flex items-center rounded-lg transition-colors duration-200 group relative
+                            ${isCollapsed ? "p-3 justify-center" : "p-3"}
+                            ${
+                                isActive("/log")
+                                    ? "bg-gray-200 text-gray-600"
+                                    : "text-gray-600 hover:bg-gray-50"
+                            }
+                        `}
+                        title={isCollapsed ? "User Reservation" : ""}
                     >
-                        <Archive size={18} className="md:w-5 md:h-5" />
-                        <span className="font-medium">Activity Logs</span>
+                        <Calendar
+                            className={`
+                            ${isCollapsed ? "w-5 h-5" : "w-5 h-5"}
+                            ${
+                                isActive("/log")
+                                    ? "text-gray-600"
+                                    : "text-gray-500 group-hover:text-gray-700"
+                            }
+                        `}
+                        />
+                        {!isCollapsed && (
+                            <span className="ml-3 font-medium whitespace-nowrap">
+                                Activity Logs
+                            </span>
+                        )}
+                        {isCollapsed && (
+                            <div className="absolute left-full ml-2 px-2 py-1 bg-gray-900 text-white text-sm rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50">
+                                Activity Logs
+                            </div>
+                        )}
                     </Link>
-                </nav>
-
-                {/* Logout Button at the bottom */}
-                <div className="absolute bottom-0 left-0 right-0 p-3 md:p-4 border-t border-gray-200 bg-slate-50">
-                    <button
-                        onClick={(e) => {
-                            e.preventDefault();
-                            handleLogout();
-                        }}
-                        className="flex items-center gap-3 px-3 py-2 md:px-4 md:py-3 text-gray-600 hover:bg-gray-100 rounded-xl transition-all w-full text-left text-sm md:text-base"
-                    >
-                        <LogOut size={18} className="md:w-5 md:h-5" />
-                        <span className="font-medium">Log Out</span>
-                    </button>
                 </div>
-            </aside>
+            </div>
         </>
     );
 };
 
-export default AdminSidebar;
+export default SideBar;

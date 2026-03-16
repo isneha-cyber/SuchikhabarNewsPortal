@@ -1,183 +1,158 @@
 import React, { useState, useRef, useEffect } from "react";
-import {
-    LogOut,
-    User,
-    Settings,
-    ChevronDown,
-    ChevronUp,
-    Menu,
-} from "lucide-react";
-import { usePage } from "@inertiajs/react";
+import { Menu, UserCircle, Settings, LogOut, ChevronDown } from "lucide-react";
+import { Link, usePage, router } from "@inertiajs/react";
 
-const AdminNavbar = ({ toggleSidebar }) => {
-    const user = usePage().props.auth.user;
-    const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-    const dropdownRef = useRef(null);
-
+const AdminNavBar = ({ onMenuToggle }) => {
+    const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+    const userMenuRef = useRef(null);
+    const { auth } = usePage().props;
+    const user = auth?.user;
     const imgurl = import.meta.env.VITE_IMAGE_PATH;
 
+    const toggleUserMenu = () => {
+        setIsUserMenuOpen((prev) => !prev);
+    };
+
+    const handleLogout = async () => {
+        try {
+            await axios.post(route("logout"));
+            window.location.href = "/login";
+        } catch (error) {
+            console.error("Logout error:", error);
+            window.location.href = "/login";
+        }
+    };
+
+    // Close menu when clicking outside or pressing Escape key
     useEffect(() => {
         const handleClickOutside = (event) => {
-            if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-                setIsDropdownOpen(false);
+            if (
+                userMenuRef.current &&
+                !userMenuRef.current.contains(event.target)
+            ) {
+                setIsUserMenuOpen(false);
             }
         };
+
+        const handleEscapeKey = (event) => {
+            if (event.key === "Escape") {
+                setIsUserMenuOpen(false);
+            }
+        };
+
         document.addEventListener("mousedown", handleClickOutside);
-        return () => document.removeEventListener("mousedown", handleClickOutside);
+        document.addEventListener("keydown", handleEscapeKey);
+
+        return () => {
+            document.removeEventListener("mousedown", handleClickOutside);
+            document.removeEventListener("keydown", handleEscapeKey);
+        };
     }, []);
 
-    const toggleDropdown = () => setIsDropdownOpen(!isDropdownOpen);
-
-    const handleLogout = () => {
-        axios
-            .post(route("logout"))
-            .then((response) => {
-                window.location.href = response.data.redirect || "/login";
-            })
-            .catch((error) => {
-                console.error("Logout error:", error);
-            });
-    };
-
-    const getInitials = () => {
-        const name = user.name?.trim() || "";
-        const names = name.split(" ").filter(Boolean);
-        if (names.length === 0) return "?";
-        const firstInitial = names[0][0].toUpperCase();
-        const lastInitial = names.length > 1 ? names[names.length - 1][0].toUpperCase() : "";
-        return lastInitial ? `${firstInitial}${lastInitial}` : firstInitial;
-    };
-
-    const getAvatarColor = () => {
-        const name = user.name || "";
-        let hash = 0;
-        for (let i = 0; i < name.length; i++) {
-            hash = name.charCodeAt(i) + ((hash << 5) - hash);
-        }
-        return `hsl(${hash % 360}, 60%, 70%)`;
-    };
-
-    const hasImage =
-        user.image &&
-        typeof user.image === "string" &&
-        user.image.trim() !== "";
+    // Close menu when route changes
+    useEffect(() => {
+        setIsUserMenuOpen(false);
+    }, [window.location.pathname]);
 
     return (
-        <div className="w-full px-4 md:px-6 py-3 bg-white shadow-md fixed top-0 right-0 z-30 transition-all duration-300">
-            <div className="flex items-center justify-between">
-
-                {/* ── LEFT: hamburger + logo ── */}
-                <div className="flex items-center gap-3">
-                    {/* Hamburger — visible on mobile/tablet */}
-                    <button
-                        onClick={toggleSidebar}
-                        className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg lg:hidden"
-                    >
-                        <Menu size={24} />
-                    </button>
-
-                    {/* Logo — always visible */}
-                    <a href="/" className="flex items-center">
-                        <img
-                            src="/images/logo.png"
-                            alt="ShuchikKhabar"
-                            className="h-9 w-auto object-contain"
-                            onError={(e) => {
-                                // fallback text if image missing
-                                e.currentTarget.style.display = "none";
-                                e.currentTarget.nextSibling.style.display = "block";
-                            }}
-                        />
-                        <span
-                            className="hidden text-base font-bold text-[#8B0000] tracking-wide"
-                            style={{ fontFamily: "Georgia, serif" }}
+        <nav className="fixed top-0 right-0 w-full lg:w-[98%] h-16 border-b z-30 bg-white">
+            <div className="h-full px-4 sm:px-6 lg:px-8">
+                <div className="flex items-center justify-between h-full">
+                    {/* Left side - Menu toggle and branding */}
+                    <div className="flex items-center space-x-4">
+                        <button
+                            onClick={onMenuToggle}
+                            className="lg:hidden p-2 rounded-lg hover:bg-gray-100 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
+                            aria-label="Toggle menu"
                         >
-                            शुचीखबर
-                        </span>
-                    </a>
-                </div>
+                            <Menu className="w-5 h-5 text-gray-700" />
+                        </button>
 
-                {/* ── SPACER ── */}
-                <div className="flex-1" />
-
-                {/* ── RIGHT: user dropdown ── */}
-                <div className="relative" ref={dropdownRef}>
-                    <div
-                        className="flex items-center space-x-2 md:space-x-3 cursor-pointer p-2 rounded-lg hover:bg-gray-50 transition-colors"
-                        onClick={toggleDropdown}
-                    >
-                        {hasImage ? (
-                            <img
-                                src={`${imgurl}/${user.image}`}
-                                alt={user.name}
-                                className="w-8 h-8 md:w-10 md:h-10 rounded-full object-cover border-2 border-gray-200"
-                                onError={(e) => { e.target.style.display = "none"; }}
-                            />
-                        ) : (
-                            <div
-                                className="w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center text-white text-xs md:text-sm font-semibold border-2 border-gray-200"
-                                style={{ backgroundColor: getAvatarColor() }}
-                            >
-                                {getInitials()}
-                            </div>
-                        )}
-
-                        <div className="hidden lg:flex flex-col items-end mr-2">
-                            <span className="text-sm font-semibold text-gray-800">
-                                {user.name}
-                            </span>
-                            <span className="text-xs text-gray-500 truncate max-w-[160px]">
-                                {user.email}
-                            </span>
-                        </div>
-
-                        {isDropdownOpen
-                            ? <ChevronUp size={16} className="text-gray-500" />
-                            : <ChevronDown size={16} className="text-gray-500" />
-                        }
+                        {/* Optional: Add branding/logo here */}
+                        <Link href="/" className="hidden lg:block">
+                            <h1 className="text-lg font-semibold text-gray-800">
+                                SuchiKhabar
+                            </h1>
+                        </Link>
                     </div>
 
-                    {/* Dropdown */}
-                    {isDropdownOpen && (
-                        <div className="absolute right-0 mt-2 w-48 md:w-56 bg-white rounded-xl shadow-lg py-2 z-40 border border-gray-100">
-                            <div className="px-4 py-3 border-b border-gray-100">
-                                <p className="text-sm font-medium text-gray-900">Signed in as</p>
-                                <p className="text-xs md:text-sm text-gray-500 truncate">{user.email}</p>
-                            </div>
+                    {/* Right side - User menu */}
+                    <div className="flex items-center space-x-4">
+                        {/* Optional: Add notifications or other icons here */}
 
-                            <a
-                                href="#"
-                                className="flex items-center px-4 py-3 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors"
-                                onClick={(e) => { e.preventDefault(); setIsDropdownOpen(false); }}
-                            >
-                                <User size={16} className="mr-3" />
-                                Your Profile
-                            </a>
-                            <a
-                                href="#"
-                                className="flex items-center px-4 py-3 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors"
-                                onClick={(e) => { e.preventDefault(); setIsDropdownOpen(false); }}
-                            >
-                                <Settings size={16} className="mr-3" />
-                                Account Settings
-                            </a>
-
-                            <div className="border-t border-gray-100 my-1" />
-
+                        <div className="relative" ref={userMenuRef}>
                             <button
-                                className="flex items-center px-4 py-3 text-sm text-red-600 hover:bg-red-50 transition-colors w-full text-left"
-                                onClick={handleLogout}
+                                onClick={toggleUserMenu}
+                                className="flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-100 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
+                                aria-expanded={isUserMenuOpen}
+                                aria-haspopup="true"
                             >
-                                <LogOut size={16} className="mr-3" />
-                                Sign out
+                                <div className="flex items-center space-x-3">
+                                    <div className="w-8 h-8 rounded-full flex items-center justify-center overflow-hidden bg-gray-200">
+                                        {user?.image ? (
+                                            <img
+                                                src={`${imgurl}/${user.image}`}
+                                                alt={`${
+                                                    user?.name || "User"
+                                                } profile`}
+                                                className="w-full h-full rounded-full object-cover"
+                                                onError={(e) => {
+                                                    e.target.style.display =
+                                                        "none";
+                                                }}
+                                            />
+                                        ) : (
+                                            <img
+                                                src="/images/placeholder.png"
+                                                alt="Placeholder"
+                                                className="w-full h-full rounded-full object-cover"
+                                            />
+                                        )}
+                                    </div>
+                                    <div className="hidden sm:block text-left">
+                                        <span className="text-sm font-medium text-gray-700 block">
+                                            {user?.name || "Guest"}
+                                        </span>
+                                    </div>
+                                </div>
+                                <ChevronDown
+                                    className={`w-4 h-4 text-gray-600 transition-transform duration-200 ${
+                                        isUserMenuOpen ? "rotate-180" : ""
+                                    }`}
+                                />
                             </button>
-                        </div>
-                    )}
-                </div>
 
+                            {/* User dropdown menu */}
+                            {isUserMenuOpen && (
+                                <div className="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-40">
+                                    {/* User info section */}
+                                    <div className="px-4 py-3 border-b border-gray-200">
+                                        <p className="text-sm font-medium text-gray-900 truncate">
+                                            {user?.name || "Guest"}
+                                        </p>
+                                        <p className="text-sm text-gray-500 truncate mt-1">
+                                            {user?.email || ""}
+                                        </p>
+                                    </div>
+
+                                    {/* Logout section */}
+                                    <div className="border-t border-gray-200 pt-1">
+                                        <button
+                                            onClick={handleLogout}
+                                            className="flex items-center w-full px-4 py-2 text-sm text-red-600 hover:bg-gray-100 transition-colors duration-150 focus:outline-none"
+                                        >
+                                            <LogOut className="w-4 h-4 mr-3" />
+                                            Sign Out
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
             </div>
-        </div>
+        </nav>
     );
 };
 
-export default AdminNavbar;
+export default AdminNavBar;

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Camera, Upload } from "lucide-react";
+import { Camera, Upload, Hash } from "lucide-react";
 
 const EditBannerForm = ({
     showForm,
@@ -9,23 +9,26 @@ const EditBannerForm = ({
     handleClose,
     reloadTrigger,
     setReloadTrigger,
+    maxImageSizeMb = 10,
 }) => {
-    // Only render if showForm is true
     if (!showForm || !editingBanner) return null;
 
     const [bannerForm, setBannerForm] = useState({
         image: null,
         link: "",
         category: "",
+        priority: "",
     });
     const [imagePreview, setImagePreview] = useState(editingBanner.image);
     const [isSubmitted, setIsSubmitted] = useState(false);
+    const [errors, setErrors] = useState({});
 
     useEffect(() => {
         setBannerForm({
             image: null,
             link: editingBanner.link || "",
             category: editingBanner.category || "",
+            priority: editingBanner.priority ?? "",
         });
         setImagePreview(editingBanner.image);
     }, [editingBanner]);
@@ -38,10 +41,11 @@ const EditBannerForm = ({
                 formData.append(key, bannerForm[key]);
             }
         });
-        formData.append("id", editingBanner.id); // ensure ID is sent
+        formData.append("id", editingBanner.id);
 
         try {
             setIsSubmitted(true);
+            setErrors({});
             await handleUpdate(formData, editingBanner.id);
 
             // Reset and close
@@ -49,28 +53,31 @@ const EditBannerForm = ({
                 image: null,
                 link: "",
                 category: "",
+                priority: "",
             });
             setImagePreview(null);
             setShowForm(false);
         } catch (error) {
             console.error("Error updating data", error);
+            const serverErrors = error.response?.data?.errors || {};
+            setErrors(serverErrors);
         } finally {
             setIsSubmitted(false);
         }
     };
 
-     const handleChange = (e) => {
+    const handleChange = (e) => {
         const { name, value, type, files } = e.target;
 
         if (type === "file") {
             const file = files[0];
 
-            // Check file size (2MB = 2 * 1024 * 1024 bytes)
-            if (file && file.size > 2 * 1024 * 1024) {
-                alert(
-                    "The image field must not be greater than 2048 kilobytes (2MB)."
-                );
-                // Clear the file input
+            // Check file size (MB -> bytes)
+            const maxSize = maxImageSizeMb * 1024 * 1024;
+            if (file && file.size > maxSize) {
+                const message = `Image size must be less than ${maxImageSizeMb}MB.`;
+                alert(message);
+                setErrors((prev) => ({ ...prev, image: [message] }));
                 e.target.value = null;
                 return;
             }
@@ -89,6 +96,7 @@ const EditBannerForm = ({
             image: null,
             link: "",
             category: "",
+            priority: "",
         });
         setImagePreview(null);
         handleClose();
@@ -110,6 +118,8 @@ const EditBannerForm = ({
                 </div>
 
                 <form onSubmit={handleSubmit} className="space-y-6">
+
+                    {/* Image Upload */}
                     <div className="space-y-2">
                         <label className="flex items-center text-lg font-semibold text-gray-700">
                             <Camera className="mr-3 text-green-500" size={22} />
@@ -143,6 +153,9 @@ const EditBannerForm = ({
                                 className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                             />
                         </div>
+                        {errors.image && (
+                            <p className="text-sm text-red-600">{errors.image[0]}</p>
+                        )}
                     </div>
 
                     {/* Category Selection */}
@@ -164,6 +177,36 @@ const EditBannerForm = ({
                             <option value="Rectangle">Rectangle</option>
                             <option value="Square">Square</option>
                         </select>
+                        {errors.category && (
+                            <p className="text-sm text-red-600 mt-1">{errors.category[0]}</p>
+                        )}
+                    </div>
+
+                    {/* Priority Input */}
+                    <div>
+                        <label
+                            htmlFor="priority"
+                            className="block text-sm font-medium text-gray-700 mb-2"
+                        >
+                            <Hash className="inline mr-1 text-indigo-500" size={15} />
+                            Display Priority
+                        </label>
+                        <input
+                            type="number"
+                            id="priority"
+                            name="priority"
+                            min="1"
+                            value={bannerForm.priority}
+                            onChange={handleChange}
+                            placeholder="e.g. 1 = shown first, 2 = second"
+                            className="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 border-gray-300 focus:ring-indigo-500 focus:border-indigo-500"
+                        />
+                        <p className="text-xs text-gray-400 mt-1">
+                            Lower number = shown first. Each banner should have a unique priority.
+                        </p>
+                        {errors.priority && (
+                            <p className="text-sm text-red-600 mt-1">{errors.priority[0]}</p>
+                        )}
                     </div>
 
                     {/* Link Input */}
@@ -183,6 +226,9 @@ const EditBannerForm = ({
                             placeholder="https://example.com"
                             className="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 border-gray-300 focus:ring-indigo-500 focus:border-indigo-500"
                         />
+                        {errors.link && (
+                            <p className="text-sm text-red-600 mt-1">{errors.link[0]}</p>
+                        )}
                     </div>
 
                     {/* Buttons */}

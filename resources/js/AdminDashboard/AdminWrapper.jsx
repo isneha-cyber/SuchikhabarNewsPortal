@@ -1,31 +1,49 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+
+import { usePage } from "@inertiajs/react";
 import AdminNavBar from "./AdminNavBar";
 import AdminSideBar from "./AdminSideBar";
 
-const AdminWrapper = ({ children }) => {
-    const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
-    const toggleSidebar = () => {
-        setIsSidebarOpen(!isSidebarOpen);
-    };
+const AdminWrapper = ({ children }) => {
+    const [isMobileOpen, setIsMobileOpen] = useState(false);
+    const [isCollapsed, setIsCollapsed] = useState(false);
+    const { props } = usePage();
+    const user = props?.auth?.user || null;
+
+    const toggleMobile = () => setIsMobileOpen(!isMobileOpen);
+    const toggleCollapse = () => setIsCollapsed(!isCollapsed);
+
+    // Close mobile sidebar on resize
+    useEffect(() => {
+        const handleResize = () => {
+            if (window.innerWidth >= 1024) {
+                setIsMobileOpen(false);
+            }
+        };
+
+        window.addEventListener("resize", handleResize);
+        return () => window.removeEventListener("resize", handleResize);
+    }, []);
 
     return (
-        <div className="flex min-h-screen bg-gray-50">
-            {/* Sidebar - Hidden on mobile and tablet, visible on desktop */}
-            <AdminSideBar isOpen={isSidebarOpen} toggleSidebar={toggleSidebar} />
+        <div className="min-h-screen bg-gray-50">
+            <AdminNavBar onMenuToggle={toggleMobile} />
+            <AdminSideBar
+                isMobileOpen={isMobileOpen}
+                onMobileToggle={toggleMobile}
+                user={user}
+                isCollapsed={isCollapsed}
+                onToggleCollapse={toggleCollapse}
+            />
 
-            {/* Main Content Area */}
-            <div className="flex-1 flex flex-col lg:ml-64">
-                {/* Navbar */}
-                <AdminNavBar toggleSidebar={toggleSidebar} />
-
-                {/* Page Content */}
-                <main className="flex-1  w-full px-4 sm:px-6 md:px-4 lg:px-8  mt-16 md:mt-0 pt-4 md:pt-16 lg:pt-28 md:ml-auto ">
-                    <div className=" min-h-[calc(100vh-8rem)]">
-                        {children}
-                    </div>
-                </main>
-            </div>
+            <main
+                className={`pt-10 min-h-screen  transition-all duration-300 ${
+                    isCollapsed ? "lg:ml-16" : "lg:ml-64"
+                }`}
+            >
+                <div className="p-8">{children}</div>
+            </main>
         </div>
     );
 };
