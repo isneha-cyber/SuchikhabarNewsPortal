@@ -90,7 +90,7 @@ Route::middleware('auth')->group(function () {
     
  
 
-    Route::get('/news/{slug}', [NewsController::class, 'newsShow'])->name('news.show');
+   
 });
 
 Route::get('/team', [TeamController::class, 'index'])->name('team.index'); 
@@ -103,7 +103,7 @@ Route::get('/team', [TeamController::class, 'index'])->name('team.index');
 Route::get('/category', function () {
     return Inertia::render('CategoryPage');
 });
-
+ Route::get('/news/{slug}', [NewsController::class, 'newsShow'])->name('news.show');
 
    Route::get('/category/{slug}',[CategoryController::class,'showDetails'])->name('ourcategory.showDetails');
 

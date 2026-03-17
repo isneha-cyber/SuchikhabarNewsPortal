@@ -79,7 +79,7 @@ const Footer = () => (
 
     {/* ── TOP: Categories strip ── */}
     <div style={{ background: 'rgba(0,0,0,0.18)' }}>
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+      <div className="w-full mx-auto px-4 sm:px-6 lg:px-24 py-4">
         <div className="flex items-center gap-2.5 mb-3">
           <div className="w-[3px] h-5 bg-[#8B0000] rounded-sm flex-shrink-0" />
           <h3 className="text-[0.78rem] font-bold text-white/90 tracking-widest uppercase">
@@ -105,7 +105,7 @@ const Footer = () => (
     </div>
 
     {/* ── MIDDLE: 3-column info grid ── */}
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 border-b border-white/15">
+    <div className="w-full mx-auto px-4 sm:px-6 lg:px-24 py-10 border-b border-white/15">
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 lg:gap-16">
 
         {/* ── Col 1: About with Registration Details and Address ── */}
@@ -230,7 +230,7 @@ const Footer = () => (
             </a>
 
             {/* Website */}
-            <a
+            {/* <a
               href="https://shuchikhabar.com"
               target="_blank"
               rel="noopener noreferrer"
@@ -244,7 +244,7 @@ const Footer = () => (
                 </svg>
               </span>
               www.shuchikhabar.com
-            </a>
+            </a> */}
           </div>
 
           {/* Partner */}

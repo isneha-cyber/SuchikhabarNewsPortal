@@ -5,9 +5,6 @@ import AdminWrapper from "@/AdminDashboard/AdminWrapper";
 import AddUserForm from "@/AddFormComponent/AddUserForm";
 import EditUserForm from "@/EditFormComponents/EditUserForm";
 
-
-const imgurl = import.meta.env.VITE_IMAGE_PATH;
-
 const UserManagement = () => {
     const [users, setUsers] = useState([]);
     const [reloadTrigger, setReloadTrigger] = useState(false);
@@ -67,6 +64,27 @@ const UserManagement = () => {
         }
     };
 
+    // Handle image error fallback
+    const handleImageError = (e) => {
+        e.target.style.display = 'none'; // Hide the broken image
+        // Show the initials avatar fallback
+        const parent = e.target.parentNode;
+        const initialsDiv = document.createElement('div');
+        initialsDiv.className = 'w-16 h-16 sm:w-20 sm:h-20 rounded-full flex items-center justify-center text-white font-bold text-lg sm:text-xl shadow ring-4 ring-white';
+        
+        // Get the user data from the parent component
+        const userCard = e.target.closest('[data-user-id]');
+        if (userCard) {
+            const userId = userCard.getAttribute('data-user-id');
+            const user = users.find(u => u.id === parseInt(userId));
+            if (user) {
+                initialsDiv.style.backgroundColor = getAvatarColor(user.name);
+                initialsDiv.textContent = getInitials(user.name);
+                parent.appendChild(initialsDiv);
+            }
+        }
+    };
+
     // --- Generate Initials: First letter of first + last name ---
     const getInitials = (name) => {
         const n = name?.trim() || "";
@@ -99,7 +117,6 @@ const UserManagement = () => {
             <div className="">
                 <div className="max-w-7xl mx-auto">
                     {/* Header */}
-
                     <div className="flex flex-wrap items-center justify-between mb-6 md:mb-8">
                         <div className="flex items-center">
                             <h1 className="text-2xl md:text-3xl font-bold text-gray-800">
@@ -114,18 +131,6 @@ const UserManagement = () => {
                             <span>Add New User</span>
                         </button>
                     </div>
-                    {/* <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-8">
-                        <h1 className="text-2xl sm:text-3xl font-bold text-gray-800 text-center sm:text-left">
-                            User Management
-                        </h1>
-                        <button
-                            onClick={handleAddNew}
-                            className="w-full sm:w-auto py-3 px-6 bg-red-600 hover:bg-red-700 text-white font-medium rounded-lg shadow transition duration-200 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 flex items-center justify-center gap-2"
-                        >
-                            <Plus className="w-5 h-5" />
-                            <span>Add New User</span>
-                        </button>
-                    </div> */}
 
                     {/* Modals */}
                     {showAddForm && (
@@ -149,20 +154,18 @@ const UserManagement = () => {
                         {users.map((user) => (
                             <div
                                 key={user.id}
+                                data-user-id={user.id}
                                 className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-md p-5 border border-white/20 transition-transform duration-200 hover:shadow-lg"
                             >
                                 <div className="flex flex-col items-center text-center mb-5">
                                     {/* Avatar */}
                                     <div className="relative mb-3">
-                                        {user.image ? (
-                                            <img
-                                                src={`${imgurl}/${user.image}`}
+                                        {user.image_url ? (
+                                            <img 
+                                                src={user.image_url}
                                                 alt={user.name}
+                                                onError={handleImageError}
                                                 className="w-16 h-16 sm:w-20 sm:h-20 rounded-full object-cover border-4 border-white shadow"
-                                                onError={(e) => {
-                                                    e.target.style.display =
-                                                        "none";
-                                                }}
                                             />
                                         ) : (
                                             <div

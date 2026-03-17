@@ -39,7 +39,7 @@ const TickerStrip = () => {
     fetchLatestNews();
     
     // Optional: Refresh every 5 minutes
-    const interval = setInterval(fetchLatestNews, 5 * 60 * 1000);
+    const interval = setInterval(fetchLatestNews, 2 * 60 * 1000);
     return () => clearInterval(interval);
   }, []);
 
@@ -88,7 +88,7 @@ const TickerStrip = () => {
           white-space: nowrap;
           /* width must exceed the viewport so the loop is seamless */
           width: max-content;
-          animation: ticker-scroll 20s linear infinite;
+          animation: ticker-scroll 70s linear infinite;
           will-change: transform;
         }
         .ticker-track:hover {

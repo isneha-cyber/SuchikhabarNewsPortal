@@ -38,7 +38,6 @@ const MemberCard = ({ member, index }) => {
       {/* Name */}
       <h3
         className="text-[0.95rem] font-bold text-[#1a1510] leading-tight mb-1 group-hover:text-[#00649b] transition-colors"
-        style={{ fontFamily: "'Noto Serif Devanagari', Georgia, serif" }}
       >
         {member.name}
       </h3>
@@ -111,7 +110,6 @@ const HamroTeam = () => {
               <div className="w-[5px] h-8 rounded-sm" style={{ background: '#00649b' }} />
               <h2
                 className="text-[1.6rem] font-black text-[#1a1510] leading-none tracking-tight"
-                style={{ fontFamily: "'Noto Serif Devanagari', Georgia, serif" }}
               >
                 हाम्रो टोली
               </h2>

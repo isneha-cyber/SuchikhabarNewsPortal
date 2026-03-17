@@ -54,7 +54,7 @@ const FeaturedCard = ({ story }) => {
 
   return (
     <div onClick={handleClick} className="group cursor-pointer">
-      <div className="bg-white border border-[rgba(0,0,0,0.07)] overflow-hidden">
+      <div className="bg-white border border-[rgba(0,0,0,0.07)] overflow-hidden rounded-md">
 
         {/* ── ROW 1: Time & Category ── */}
         <div className="flex items-center gap-3 px-5 pt-4 pb-2">
@@ -78,13 +78,13 @@ const FeaturedCard = ({ story }) => {
           {/* Title */}
           <h1
             className="text-[1.45rem] md:text-[2.95rem] font-bold leading-[1.35] text-[#1c1711] group-hover:text-[#8B0000] transition-colors mb-3"
-            style={{ fontFamily: "'Noto Serif Devanagari', serif" }}
+           
           >
             {story.title}
           </h1>
 
           {/* Image */}
-          <div className="relative overflow-hidden w-full">
+          <div className="relative overflow-hidden w-full rounded-md">
             <img
               src={story.image}
               alt={story.title}

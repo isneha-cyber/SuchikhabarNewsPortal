@@ -5,7 +5,7 @@ import Navbar from '@/Suchikhabar/Navbar';
 import Footer from '@/Suchikhabar/Footer';
 import LeaderboardBanner from '@/Ads/LeaderboardBanner';
 import SidebarBanner from '@/Ads/SidebarBanner';
-
+import NepaliDate from "nepali-date-converter";
 // ─── ICONS ───────────────────────────────────────────────────────────────────
 const ClockIcon = ({ size = 11 }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -28,6 +28,39 @@ const ShareIcon = () => (
     <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
   </svg>
 );
+const toNepaliDigits = (num) => {
+  const nepaliNums = ['०','१','२','३','४','५','६','७','८','९'];
+  return String(num).split('').map(d => nepaliNums[d] ?? d).join('');
+};
+
+const getNepaliDate = (dateString) => {
+  if (!dateString) return 'नयाँ';
+
+  try {
+    const date = new Date(dateString);
+    const nepaliDate = new NepaliDate(date);
+
+    const nepaliMonths = [
+      "वैशाख","जेठ","असार","साउन","भदौ","असोज",
+      "कार्तिक","मंसिर","पुष","माघ","फागुन","चैत्र"
+    ];
+
+    const nepaliWeekdays = [
+      "आइतबार","सोमबार","मङ्गलबार",
+      "बुधबार","बिहिबार","शुक्रबार","शनिबार"
+    ];
+
+    const day = toNepaliDigits(nepaliDate.getDate());
+    const month = nepaliMonths[nepaliDate.getMonth()];
+    const year = toNepaliDigits(nepaliDate.getYear());
+    const weekday = nepaliWeekdays[date.getDay()];
+
+    return `${day} ${month} ${year}, ${weekday}`;
+
+  } catch {
+    return 'मिति उपलब्ध छैन';
+  }
+};
 
 // ─── HELPER FUNCTIONS ────────────────────────────────────────────────────────
 const stripHtml = (html) => {
@@ -129,22 +162,23 @@ const getCategoryColor = (name) => CATEGORY_COLORS[name] || '#8B0000';
 
 // ─── TRANSFORM FUNCTIONS ─────────────────────────────────────────────────────
 const transformArticle = (item) => ({
-  id:            item.id,
-  title:         item.heading || item.title || '',
-  slug:          item.slug || String(item.id),
-  image:         item.image ? `/storage/${item.image}` : null,
+  id: item.id,
+  title: item.heading || item.title || '',
+  slug: item.slug || String(item.id),
+  image: item.image ? `/storage/${item.image}` : null,
   image_caption: item.image_caption || '',
-published_at:  formatDateWithNepaliDigits(item.published_at),
-  updated_at:    timeAgo(item.updated_at || item.published_at),
-  author:        { name: item.blog_by || 'समाचार टोली', avatar: null },
-  views:         item.views || Math.floor(Math.random() * 5000) + 1000,
-  content:       item.description || '<p>सामग्री उपलब्ध छैन</p>',
+
+  published_at: getNepaliDate(item.published_at),
+
+  updated_at: timeAgo(item.updated_at || item.published_at),
+  author: { name: item.blog_by || 'समाचार टोली', avatar: null },
+  views: item.views || 0,
+  content: item.description || '<p>सामग्री उपलब्ध छैन</p>',
   category: {
-    name:  item.category || 'सामान्य',
-    slug:  item.category ? item.category.toLowerCase().replace(/[^\w]/g, '-') : 'general',
+    name: item.category || 'सामान्य',
+    slug: item.category ? item.category.toLowerCase().replace(/[^\w]/g,'-') : 'general',
     color: getCategoryColor(item.category),
   },
-  tags: item.tags || [],
 });
 
 const transformRelated = (item) => ({
@@ -183,7 +217,7 @@ const SocialShare = ({ title }) => {
 // ─── RELATED CARD ────────────────────────────────────────────────────────────
 const RelatedCard = ({ story }) => (
   <Link href={`/news/${story.slug}`}>
-    <article className="group flex gap-3 bg-white border border-[rgba(0,0,0,0.08)] overflow-hidden
+    <article className="group flex gap-3 bg-white border rounded-md border-[rgba(0,0,0,0.08)] overflow-hidden
                         hover:border-[rgba(0,0,0,0.2)] transition-colors cursor-pointer">
       <div className="relative flex-shrink-0 overflow-hidden" style={{ width: 90, minHeight: 70 }}>
         {story.image ? (
@@ -195,8 +229,8 @@ const RelatedCard = ({ story }) => (
         <div className="absolute left-0 top-0 bottom-0 w-[3px]" style={{ background: story.category.color }} />
       </div>
       <div className="flex flex-col justify-between py-2 pr-2 flex-1 min-w-0">
-        <h4 className="text-[0.9rem] font-semibold leading-[1.4] text-[#1a1510] group-hover:text-[#8B0000] transition-colors line-clamp-2"
-            style={{ fontFamily: "'Noto Serif Devanagari', Georgia, serif" }}>
+        <h4 className="text-[1.15rem] font-semibold leading-[1.4] text-[#1a1510] group-hover:text-[#8B0000] transition-colors line-clamp-2"
+            >
           {story.title}
         </h4>
         <p className="text-[0.7rem] text-[#b0a498] mt-1 flex items-center gap-1">
@@ -256,7 +290,7 @@ const NewsDetailPage = ({ article, related = [], slug, ads = {} }) => {
       <Navbar />
 
       {/* Top leaderboard banner */}
-      <div className="bg-white border-b border-[rgba(0,0,0,0.07)]">
+      <div className="bg-white border-b border-[rgba(0,0,0,0.07)] ">
         <div className="max-w-7xl mx-auto px-3 md:px-5 py-3 flex items-center justify-center">
           <LeaderboardBanner />
         </div>
@@ -286,7 +320,7 @@ const NewsDetailPage = ({ article, related = [], slug, ads = {} }) => {
             {/* LEFT: ARTICLE CONTENT */}
             <main className="flex-1 min-w-0 flex flex-col gap-4" ref={mainRef}>
 
-              <article className="bg-white border border-[rgba(0,0,0,0.08)]">
+              <article className="bg-white border  rounded-md border-[rgba(0,0,0,0.08)]">
 
                 {/* Category tag + title */}
                 <div className="px-4 md:px-6 pt-5 pb-0">
@@ -299,7 +333,7 @@ const NewsDetailPage = ({ article, related = [], slug, ads = {} }) => {
                   </div>
 
                   <h2 className="text-[1.8rem] md:text-[2.2rem] font-extrabold leading-[1.35] text-[#1a1510] mb-4"
-                      style={{ fontFamily: "'Noto Serif Devanagari', Georgia, serif" }}>
+                      >
                     {transformedArticle.title}
                   </h2>
 
@@ -321,7 +355,7 @@ const NewsDetailPage = ({ article, related = [], slug, ads = {} }) => {
 
                 {/* Hero image */}
                 {transformedArticle.image && (
-                  <div className="relative mt-4 mx-4 md:mx-6 overflow-hidden">
+                  <div className="relative mt-4 mx-4 md:mx-6 overflow-hidden rounded-md">
                     <img src={transformedArticle.image} alt={transformedArticle.title}
                          className="w-full h-auto block" style={{ maxHeight: 500, objectFit: 'cover' }} />
                     {transformedArticle.image_caption && (
@@ -332,7 +366,7 @@ const NewsDetailPage = ({ article, related = [], slug, ads = {} }) => {
 
                 {/* Body content */}
                 <div className="px-4 md:px-6 py-5 prose prose-lg max-w-none text-[1.1rem] text-[#2d2520] leading-[1.85]"
-                     style={{ fontFamily: "'Noto Serif Devanagari', Georgia, serif" }}
+                    
                      dangerouslySetInnerHTML={{ __html: transformedArticle.content }} />
 
                 {/* Social share */}
@@ -361,8 +395,8 @@ const NewsDetailPage = ({ article, related = [], slug, ads = {} }) => {
                 <div>
                   <div className="flex items-center gap-2.5 pb-2 mb-3 border-b-2 border-[#8B0000]">
                     <div className="w-[4px] h-5 bg-[#8B0000] rounded-sm" />
-                    <h2 className="text-[1rem] font-black uppercase tracking-wide text-[#8B0000]"
-                        style={{ fontFamily: "'Noto Serif Devanagari', Georgia, serif" }}>
+                    <h2 className="text-[0.9rem] font-black uppercase tracking-wide text-[#8B0000]"
+                        >
                       सम्बन्धित समाचार
                     </h2>
                   </div>

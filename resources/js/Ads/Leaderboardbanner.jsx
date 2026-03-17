@@ -14,9 +14,9 @@ import React, { useEffect, useState } from 'react';
 // ── Placeholder when no banners available ─────────────────────────────────────
 const LeaderboardPlaceholder = () => (
   <div
-    className="w-full border-2 border-dashed border-gray-300   flex items-center justify-center text-gray-400 dark:text-gray-500"
-
+    className="w-full max-w-[728px] h-[90px] border-2 border-dashed border-gray-300 flex items-center justify-center text-gray-400 dark:text-gray-500"
   >
+    <span className="text-sm">Advertisement</span>
   </div>
 );
 
@@ -26,16 +26,12 @@ const LeaderboardItem = ({ banner }) => (
     href={banner.link || '#'}
     target={banner.link ? '_blank' : '_self'}
     rel="noopener noreferrer"
-
-    className="block w-full  overflow-hidden
-               
-               transition-all duration-150  shadow-sm"
-   
+    className="block w-full max-w-[898px] h-[90px] overflow-hidden transition-all duration-150 shadow-sm"
   >
     <img
       src={banner.image}
       alt={banner.alt_text || "विज्ञापन"}
-      className="  block border border-green-500"
+      className="w-full h-full object-cover object-center block"
       loading="lazy"
       onError={(e) => {
         // Hide the parent anchor if image fails to load

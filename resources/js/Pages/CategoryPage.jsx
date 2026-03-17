@@ -4,7 +4,7 @@ import Navbar from '@/Suchikhabar/Navbar';
 import Footer from '@/Suchikhabar/Footer';
 import LeaderboardBanner from '@/Ads/LeaderboardBanner';
 import SidebarBanner     from '@/Ads/SidebarBanner';
-
+import NepaliDate from "nepali-date-converter";
 // ─── ICONS ────────────────────────────────────────────────────────────────────
 const ClockIcon = () => (
   <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
@@ -16,6 +16,43 @@ const EyeIcon = () => (
     <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
   </svg>
 );
+
+const toNepaliDigits = (num) => {
+  const nepaliNums = ['०','१','२','३','४','५','६','७','८','९'];
+  return String(num).split('').map(d => nepaliNums[d] ?? d).join('');
+};
+
+const getNepaliDate = (dateString) => {
+  if (!dateString) return 'नयाँ';
+
+  try {
+    const date = new Date(dateString);
+    const nepaliDate = new NepaliDate(date);
+
+    const nepaliMonths = [
+      "वैशाख","जेठ","असार","साउन","भदौ","असोज",
+      "कार्तिक","मंसिर","पुष","माघ","फागुन","चैत्र"
+    ];
+
+    const nepaliWeekdays = [
+      "आइतबार","सोमबार","मङ्गलबार",
+      "बुधबार","बिहिबार","शुक्रबार","शनिबार"
+    ];
+
+    const day = toNepaliDigits(nepaliDate.getDate());
+    const month = nepaliMonths[nepaliDate.getMonth()];
+    const year = toNepaliDigits(nepaliDate.getYear());
+    const weekday = nepaliWeekdays[date.getDay()];
+
+    return `${day} ${month} ${year}, ${weekday}`;
+
+  } catch {
+    return 'मिति उपलब्ध छैन';
+  }
+};
+
+
+
 
 // ─── HELPERS ──────────────────────────────────────────────────────────────────
 const stripHtml = (html) => {
@@ -43,29 +80,31 @@ const CATEGORY_COLORS = {
 const getCategoryColor = (name) => CATEGORY_COLORS[name] || '#8B0000';
 
 const transformItem = (item) => ({
-  id:       item.id,
-  title:    item.heading    || item.title   || '',
-  slug:     item.slug       || String(item.id),
-  image:    item.image      ? `/storage/${item.image}` : null,
-  time:     item.published_at
-              ? new Date(item.published_at).toLocaleDateString('ne-NP')
-              : (item.created_at ? new Date(item.created_at).toLocaleDateString('ne-NP') : 'नयाँ'),
-  author:   item.blog_by    || item.author  || 'समाचार टोली',
-  excerpt:  item.description ? stripHtml(item.description).slice(0, 140) + '…' : '',
-  views:    item.views      || 0,
-  category: item.category   || '',
+  id: item.id,
+  title: item.heading || item.title || '',
+  slug: item.slug || String(item.id),
+  image: item.image ? `/storage/${item.image}` : null,
+
+  time: item.published_at
+    ? getNepaliDate(item.published_at)
+    : (item.created_at ? getNepaliDate(item.created_at) : 'नयाँ'),
+
+  author: item.blog_by || item.author || 'समाचार टोली',
+  excerpt: item.description ? stripHtml(item.description).slice(0,140)+'…' : '',
+  views: item.views || 0,
+  category: item.category || '',
 });
 
 // ─── FEATURED CARD ────────────────────────────────────────────────────────────
 const FeaturedCard = ({ story, color }) => (
   <Link href={`/news/${story.slug}`}>
-    <article className="group bg-white border border-[rgba(0,0,0,0.08)] overflow-hidden
+    <article className="group bg-white rounded-md border border-[rgba(0,0,0,0.08)] overflow-hidden
                         hover:border-[rgba(0,0,0,0.2)] hover:shadow-sm
                         transition-all duration-200 cursor-pointer flex flex-col h-full">
       <div className="relative overflow-hidden" style={{ paddingBottom: '56%' }}>
         {story.image ? (
           <img src={story.image} alt={story.title}
-               className="absolute inset-0 w-full h-full object-cover
+               className="absolute inset-0 w-full h-full object-cover rounded-md
                           transition-transform duration-500 group-hover:scale-[1.04]" />
         ) : (
           <div className="absolute inset-0 bg-[#e8e4df] flex items-center justify-center">
@@ -82,7 +121,7 @@ const FeaturedCard = ({ story, color }) => (
       <div className="p-3 flex flex-col flex-1">
         <h3 className="text-[1.92rem] font-bold leading-[1.42] text-[#1a1510]
                        group-hover:text-[#8B0000] transition-colors line-clamp-3 flex-1 mb-2"
-            style={{ fontFamily: "'Noto Serif Devanagari', Georgia, serif" }}>
+            >
           {story.title}
         </h3>
         {story.excerpt && (
@@ -106,7 +145,7 @@ const FeaturedCard = ({ story, color }) => (
 // ─── LIST CARD ────────────────────────────────────────────────────────────────
 const ListCard = ({ story, color }) => (
   <Link href={`/news/${story.slug}`}>
-    <article className="group flex bg-white border border-[rgba(0,0,0,0.08)] overflow-hidden
+    <article className="group flex bg-white rounded-md border border-[rgba(0,0,0,0.08)] overflow-hidden
                         hover:border-[rgba(0,0,0,0.2)] hover:shadow-sm
                         transition-all duration-200 cursor-pointer">
       <div className="relative flex-shrink-0 overflow-hidden" style={{ width: 100, minHeight: 80 }}>
@@ -120,9 +159,9 @@ const ListCard = ({ story, color }) => (
         <div className="absolute left-0 top-0 bottom-0 w-[3px]" style={{ background: color }} />
       </div>
       <div className="flex flex-col justify-between py-2.5 px-3 flex-1 min-w-0">
-        <h3 className="text-[0.83rem] font-semibold leading-[1.4] text-[#1a1510]
+        <h3 className="text-[1.15rem] font-semibold leading-[1.4] text-[#1a1510]
                        group-hover:text-[#8B0000] transition-colors line-clamp-2"
-            style={{ fontFamily: "'Noto Serif Devanagari', Georgia, serif" }}>
+           >
           {story.title}
         </h3>
         <div className="flex items-center justify-between mt-1.5">
@@ -143,17 +182,17 @@ const ListCard = ({ story, color }) => (
 // ─── NUMBERED CARD (sidebar) ──────────────────────────────────────────────────
 const NumberedCard = ({ story, index, color }) => (
   <Link href={`/news/${story.slug}`}>
-    <article className="group flex items-start gap-2.5 py-2.5
+    <article className="group flex items-start gap-2.5 py-2.5 rounded-md
                         border-b border-[rgba(0,0,0,0.06)] last:border-b-0
                         hover:bg-[#faf8f5] transition-colors cursor-pointer px-2">
       <span className="text-[0.95rem] font-black leading-none flex-shrink-0 w-5 text-right mt-0.5"
-            style={{ color: index < 3 ? color : '#d4cfc8', fontFamily: 'Georgia, serif' }}>
+            style={{ color: index < 3 ? color : '#d4cfc8'}}>
         {String(index + 1).padStart(2, '0')}
       </span>
       <div className="flex-1 min-w-0">
         <h4 className="text-[0.8rem] font-semibold leading-[1.4] text-[#1a1510]
                        group-hover:text-[#8B0000] transition-colors line-clamp-2"
-            style={{ fontFamily: "'Noto Serif Devanagari', Georgia, serif" }}>
+     >
           {story.title}
         </h4>
         <p className="text-[0.62rem] text-[#b0a498] mt-0.5 flex items-center gap-1">
@@ -274,7 +313,7 @@ const CategoryPage = ({ slug, category, news, moreNews }) => {
             <div className="flex items-center gap-3">
               <div className="w-[5px] h-8 rounded-sm flex-shrink-0" style={{ background: color }} />
               <h1 className="text-[1.4rem] md:text-[1.65rem] font-black tracking-wide uppercase leading-none"
-                  style={{ color, fontFamily: "'Noto Serif Devanagari', Georgia, serif" }}>
+              >
                 {categoryName}
               </h1>
             </div>

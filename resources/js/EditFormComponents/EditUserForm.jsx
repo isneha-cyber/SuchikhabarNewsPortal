@@ -11,29 +11,20 @@ const EditUserForm = ({
     const [userForm, setUserForm] = useState({
         name: "",
         email: "",
-        image: "", // Will be string (URL) initially, or File if changed
+        image: "",
     });
     const [imagePreview, setImagePreview] = useState("");
-
-
-    const imgurl = import.meta.env.VITE_IMAGE_PATH;
 
     // Reset form when editingUser changes
     useEffect(() => {
         if (editingUser) {
-            const { name, email, image } = editingUser;
+            const { name, email, image_url } = editingUser;
             setUserForm({
                 name: name || "",
                 email: email || "",
-                image: image || "", // Keep as URL string
+                image: image_url || "", // Use image_url from API
             });
-            setImagePreview(
-                image
-                    ? image.startsWith("http") || image.startsWith("/")
-                        ? image
-                        : `${imgurl}/${image}`
-                    : ""
-            );
+            setImagePreview(image_url || "");
         }
     }, [editingUser]);
 
@@ -58,7 +49,9 @@ const EditUserForm = ({
         if (userForm.image instanceof File) {
             formData.append("image", userForm.image);
         }
-        // Do NOT send image if it's a string (existing image) — Laravel will keep old one
+
+        // Add method spoofing for PUT request if your API requires it
+        formData.append("_method", "PUT");
 
         try {
             setSubmitting(true);
@@ -69,7 +62,7 @@ const EditUserForm = ({
             setEditingUser(null);
         } catch (error) {
             console.error("Error updating user:", error);
-            // Optionally show error toast/message
+            alert("Failed to update user. Please try again.");
         } finally {
             setSubmitting(false);
         }
@@ -82,16 +75,13 @@ const EditUserForm = ({
             const file = files[0];
             const maxSize = 2 * 1024 * 1024; // 2MB in bytes
 
-            // Check if file size exceeds 2MB
             if (file.size > maxSize) {
-                alert(
-                    "The image field must not be greater than 2048 kilobytes (2MB)."
-                );
-                e.target.value = ""; // Clear the file input
-                return; // Exit the function early
+                alert("The image field must not be greater than 2048 kilobytes (2MB).");
+                e.target.value = "";
+                return;
             }
 
-            if (imagePreview) {
+            if (imagePreview && imagePreview.startsWith("blob:")) {
                 URL.revokeObjectURL(imagePreview);
             }
 
@@ -113,6 +103,11 @@ const EditUserForm = ({
         setImagePreview("");
     };
 
+    // Fallback image if none exists
+    const handleImageError = (e) => {
+        e.target.src = "https://via.placeholder.com/150?text=No+Image";
+    };
+
     return (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
             <div className="bg-white rounded-lg shadow-xl w-full max-w-md">
@@ -130,7 +125,7 @@ const EditUserForm = ({
 
                 <form
                     onSubmit={handleSubmit}
-                    className="p-6 space-y-6 h-[65vh] overflow-y-auto"
+                    className="p-6 space-y-6 max-h-[80vh] overflow-y-auto"
                 >
                     {/* Image Upload Field */}
                     <div className="space-y-2">
@@ -144,6 +139,7 @@ const EditUserForm = ({
                                     <img
                                         src={imagePreview}
                                         alt="Preview"
+                                        onError={handleImageError}
                                         className="mx-auto h-32 w-32 object-cover rounded-lg shadow-lg"
                                     />
                                     <p className="text-sm text-gray-600">

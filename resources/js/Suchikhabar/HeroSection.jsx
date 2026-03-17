@@ -5,6 +5,8 @@ import FeaturedCard  from './FeaturedCard';
 import SecondaryGrid from './SecondaryGrid';
 import RightSidebar  from './RightSidebar';
 
+import NepaliDate from "nepali-date-converter";
+
 // ─── Categories ───────────────────────────────────────────────────────────────
 const SECONDARY_CATEGORIES = [
   'अर्थतन्त्र',
@@ -21,14 +23,36 @@ const RIGHT_CATEGORIES = [
   'मनोरञ्जन',
 ];
 
+
+const toNepaliDigits = (num) => {
+  const nepaliNums = ['०','१','२','३','४','५','६','७','८','९'];
+  return String(num)
+    .split('')
+    .map(d => nepaliNums[d] ?? d)
+    .join('');
+};
+
 // ─── Helpers ──────────────────────────────────────────────────────────────────
-const timeAgo = (dateString) => {
-  if (!dateString) return 'नयाँ';
-  const diff = Math.floor((Date.now() - new Date(dateString)) / 1000);
-  if (diff < 60)    return 'अहिले';
-  if (diff < 3600)  return `${Math.floor(diff / 60)} मिनेट अघि`;
-  if (diff < 86400) return `${Math.floor(diff / 3600)} घण्टा अघि`;
-  return `${Math.floor(diff / 86400)} दिन अघि`;
+const formatNepaliDate = (dateString) => {
+  if (!dateString) return "नयाँ";
+
+  try {
+    const adDate = new Date(dateString);
+    const bsDate = new NepaliDate(adDate);
+
+    const months = [
+      "बैशाख","जेठ","असार","साउन","भदौ","असोज",
+      "कार्तिक","मंसिर","पुष","माघ","फागुन","चैत"
+    ];
+
+    const year = toNepaliDigits(bsDate.getYear());
+    const month = months[bsDate.getMonth()];
+    const day = toNepaliDigits(bsDate.getDate());
+
+    return `${year} ${month} ${day}`;
+  } catch {
+    return "नयाँ";
+  }
 };
 
 const stripHtml = (html) => {
@@ -86,77 +110,128 @@ const HeroSection = () => {
     const fetchAll = async () => {
       try {
         // ── 1. Featured card using the new endpoint ──
-        const featuredRes = await axios.get('/latest-featured');
-        if (featuredRes.data?.status && featuredRes.data?.data) {
-          const item = featuredRes.data.data;
-          setFeaturedStory({
-            id:       item.id,
-            slug:     item.slug || item.id,
-            title:    item.heading,
-            author:   item.blog_by || 'समाचार टोली',
-            excerpt:  item.description
-              ? stripHtml(item.description).substring(0, 220) + '…'
-              : 'विवरण उपलब्ध छैन।',
-            image:    imgUrl(item.image),
-            category: item.category || 'मुख्य समाचार',
-            time:     timeAgo(item.published_at || item.created_at),
-            views:    item.views || 0,
-          });
-        }
+      // AFTER
+const featuredRes = await axios.get('/headings');
+const item = Array.isArray(featuredRes.data)
+  ? featuredRes.data[0]           // index() returns a plain array — grab latest
+  : featuredRes.data?.data?.[0];  // fallback if shape ever changes
 
+if (item) {
+  setFeaturedStory({
+    id:       item.id,
+    slug:     item.slug || item.id,
+    title:    item.heading,
+    author:   item.blog_by || 'समाचार टोली',
+    excerpt:  item.description
+      ? stripHtml(item.description).substring(0, 220) + '…'
+      : 'विवरण उपलब्ध छैन।',
+    image:    imgUrl(item.image),
+    category: item.category || 'मुख्य समाचार',
+    time:     formatNepaliDate(item.published_at || item.created_at),
+    views:    item.views || 0,
+  });
+}
         // ── 2. Secondary grid ──
-        const secondaryResponses = await Promise.allSettled(
-          SECONDARY_CATEGORIES.map((cat) =>
-            axios.get(`/ournews?category=${encodeURIComponent(cat)}&per_page=1`)
-          )
-        );
+//         const secondaryResponses = await Promise.allSettled(
+//           SECONDARY_CATEGORIES.map((cat) =>
+//             axios.get(`/ournews?category=${encodeURIComponent(cat)}&per_page=1`)
+//           )
+//         );
 
-        const secondaryArticles = secondaryResponses
-          .map((res, i) => {
-            if (res.status !== 'fulfilled') return null;
-            // Fix: Access the data correctly
-            const responseData = res.value.data;
-            const item = responseData?.data?.data?.[0] || responseData?.data?.[0];
-            if (!item) return null;
-            return {
-              id:       item.id,
-              slug:     item.slug || item.id,
-              category: item.category || SECONDARY_CATEGORIES[i],
-              title:    item.heading,
-              image:    imgUrl(item.image),
-              time:     timeAgo(item.published_at || item.created_at),
-            };
-          })
-          .filter(Boolean);
+//         const secondaryArticles = secondaryResponses
+//           .map((res, i) => {
+//             if (res.status !== 'fulfilled') return null;
+//             // Fix: Access the data correctly
+//             const responseData = res.value.data;
+//             const item = responseData?.data?.data?.[0] || responseData?.data?.[0];
+//             if (!item) return null;
+//             return {
+//               id:       item.id,
+//               slug:     item.slug || item.id,
+//               category: item.category || SECONDARY_CATEGORIES[i],
+//               title:    item.heading,
+//               image:    imgUrl(item.image),
+// time: formatNepaliDate(item.published_at || item.created_at),      
+//   };
+//           })
+//           .filter(Boolean);
 
-        setSecondaryStories(secondaryArticles.slice(0, 3));
+//         setSecondaryStories(secondaryArticles.slice(0, 3));
 
+
+// AFTER — fetches 3 latest news regardless of category
+// ── 2. Secondary grid — one latest article per category ──
+const cateRes = await axios.get('/cate');
+const allCategories = cateRes.data?.data || cateRes.data || [];
+const targetCategories = allCategories.slice(0, 3); // first 3 categories
+
+const secondaryResponses = await Promise.allSettled(
+  targetCategories.map((cat) =>
+    axios.get(`/ournews?category=${encodeURIComponent(cat.name)}&per_page=1`)
+  )
+);
+
+const secondaryArticles = secondaryResponses
+  .map((res, i) => {
+    if (res.status !== 'fulfilled') return null;
+    const items =
+      res.value.data?.data?.data ||
+      res.value.data?.data ||
+      [];
+    const item = items[0];
+    if (!item) return null;
+    return {
+      id:       item.id,
+      slug:     item.slug || item.id,
+      category: item.category || targetCategories[i]?.name || 'समाचार',
+      title:    item.heading,
+      image:    imgUrl(item.image),
+      time:     formatNepaliDate(item.published_at || item.created_at),
+    };
+  })
+  .filter(Boolean);
+
+setSecondaryStories(secondaryArticles.slice(0, 3));
         // ── 3. Sidebar ──
-        const sidebarResponses = await Promise.allSettled(
-          RIGHT_CATEGORIES.map((cat) =>
-            axios.get(`/ournews?category=${encodeURIComponent(cat)}&per_page=1`)
-          )
-        );
+//         const sidebarResponses = await Promise.allSettled(
+//           RIGHT_CATEGORIES.map((cat) =>
+//             axios.get(`/ournews?category=${encodeURIComponent(cat)}&per_page=1`)
+//           )
+//         );
 
-        const sidebarArticles = sidebarResponses
-          .map((res, i) => {
-            if (res.status !== 'fulfilled') return null;
-            // Fix: Access the data correctly
-            const responseData = res.value.data;
-            const item = responseData?.data?.data?.[0] || responseData?.data?.[0];
-            if (!item) return null;
-            return {
-              id:       item.id,
-              slug:     item.slug || item.id,
-              category: item.category || RIGHT_CATEGORIES[i],
-              title:    item.heading,
-              time:     timeAgo(item.published_at || item.created_at),
-              image:    imgUrl(item.image),
-            };
-          })
-          .filter(Boolean);
+//         const sidebarArticles = sidebarResponses
+//           .map((res, i) => {
+//             if (res.status !== 'fulfilled') return null;
+//             // Fix: Access the data correctly
+//             const responseData = res.value.data;
+//             const item = responseData?.data?.data?.[0] || responseData?.data?.[0];
+//             if (!item) return null;
+//             return {
+//               id:       item.id,
+//               slug:     item.slug || item.id,
+//               category: item.category || RIGHT_CATEGORIES[i],
+//               title:    item.heading,
+// time: formatNepaliDate(item.published_at || item.created_at),
+//               image:    imgUrl(item.image),
+//             };
+//           })
+//           .filter(Boolean);
 
-        setSidebarStories(sidebarArticles);
+//         setSidebarStories(sidebarArticles);
+
+
+// AFTER — fetches 5 latest news for the sidebar
+const sidebarRes = await axios.get('/ournews?per_page=5');
+const sidebarItems = sidebarRes.data?.data?.data || sidebarRes.data?.data || [];
+const sidebarArticles = sidebarItems.slice(0, 3).map((item) => ({
+  id:       item.id,
+  slug:     item.slug || item.id,
+  category: item.category || 'समाचार',
+  title:    item.heading,
+  time:     formatNepaliDate(item.published_at || item.created_at),
+  image:    imgUrl(item.image),
+}));
+setSidebarStories(sidebarArticles);
 
       } catch (err) {
         console.error('HeroSection fetch error:', err);

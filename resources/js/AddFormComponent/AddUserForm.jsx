@@ -16,7 +16,7 @@ const AddUserForm = ({ setShowUserForm, setReloadTrigger }) => {
     // Cleanup blob URL on unmount or close
     useEffect(() => {
         return () => {
-            if (imagePreview) {
+            if (imagePreview && imagePreview.startsWith("blob:")) {
                 URL.revokeObjectURL(imagePreview);
             }
         };
@@ -25,11 +25,17 @@ const AddUserForm = ({ setShowUserForm, setReloadTrigger }) => {
     // Handle Create User
     const handleCreate = async (formData) => {
         try {
-            await axios.post(route("users.store"), formData, {
+            const response = await axios.post(route("users.store"), formData, {
                 headers: {
                     "Content-Type": "multipart/form-data",
                 },
             });
+            
+            // Check if the response has the image_url
+            if (response.data.user && response.data.user.image_url) {
+                console.log("Image uploaded successfully:", response.data.user.image_url);
+            }
+            
             setReloadTrigger((prev) => !prev); // Trigger data reload
         } catch (error) {
             console.error(
@@ -42,8 +48,16 @@ const AddUserForm = ({ setShowUserForm, setReloadTrigger }) => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        
+        // Validate required fields
+        if (!userForm.name || !userForm.email || !userForm.password) {
+            alert("Please fill in all required fields");
+            return;
+        }
+
         const formData = new FormData();
 
+        // Append all form fields
         Object.keys(userForm).forEach((key) => {
             if (userForm[key] !== null && userForm[key] !== "") {
                 formData.append(key, userForm[key]);
@@ -61,6 +75,11 @@ const AddUserForm = ({ setShowUserForm, setReloadTrigger }) => {
                 password: "",
                 image: "",
             });
+            
+            // Clean up image preview
+            if (imagePreview && imagePreview.startsWith("blob:")) {
+                URL.revokeObjectURL(imagePreview);
+            }
             setImagePreview(null);
             setShowUserForm(false);
         } catch (error) {
@@ -77,18 +96,32 @@ const AddUserForm = ({ setShowUserForm, setReloadTrigger }) => {
             const file = files[0];
             const maxSize = 2 * 1024 * 1024; // 2MB
 
+            // Validate file type
+            const validImageTypes = ['image/jpeg', 'image/png', 'image/jpg', 'image/gif'];
+            if (!validImageTypes.includes(file.type)) {
+                alert("Please upload a valid image file (JPEG, PNG, JPG, GIF)");
+                e.target.value = "";
+                return;
+            }
+
+            // Validate file size
             if (file.size > maxSize) {
                 alert("The image must not be greater than 2MB.");
                 e.target.value = "";
                 return;
             }
 
-            if (imagePreview) {
+            // Clean up previous preview
+            if (imagePreview && imagePreview.startsWith("blob:")) {
                 URL.revokeObjectURL(imagePreview);
             }
 
+            // Update form state with file
             setUserForm((prev) => ({ ...prev, [name]: file }));
-            setImagePreview(URL.createObjectURL(file));
+            
+            // Create new preview
+            const previewUrl = URL.createObjectURL(file);
+            setImagePreview(previewUrl);
         } else {
             setUserForm((prev) => ({ ...prev, [name]: value }));
         }
@@ -99,6 +132,11 @@ const AddUserForm = ({ setShowUserForm, setReloadTrigger }) => {
     };
 
     const onClose = () => {
+        // Clean up preview
+        if (imagePreview && imagePreview.startsWith("blob:")) {
+            URL.revokeObjectURL(imagePreview);
+        }
+        
         setShowUserForm(false);
         setUserForm({
             name: "",
@@ -107,6 +145,11 @@ const AddUserForm = ({ setShowUserForm, setReloadTrigger }) => {
             image: "",
         });
         setImagePreview(null);
+    };
+
+    const handleImageError = (e) => {
+        e.target.src = "https://via.placeholder.com/150?text=No+Image";
+        e.target.alt = "Image failed to load";
     };
 
     return (
@@ -137,6 +180,9 @@ const AddUserForm = ({ setShowUserForm, setReloadTrigger }) => {
                         <label className="flex items-center text-sm sm:text-base font-semibold text-gray-700">
                             <Camera className="mr-2 sm:mr-3 text-green-500" size={18} />
                             Profile Image
+                            <span className="text-xs text-gray-500 ml-2 font-normal">
+                                (Optional, max 2MB)
+                            </span>
                         </label>
                         <div className="border-2 border-dashed border-gray-300 rounded-xl p-6 text-center hover:border-green-400 transition-all duration-300 relative cursor-pointer">
                             {imagePreview ? (
@@ -144,6 +190,7 @@ const AddUserForm = ({ setShowUserForm, setReloadTrigger }) => {
                                     <img
                                         src={imagePreview}
                                         alt="Image preview"
+                                        onError={handleImageError}
                                         className="mx-auto h-24 w-24 sm:h-32 sm:w-32 object-cover rounded-lg shadow"
                                     />
                                     <p className="text-xs sm:text-sm text-gray-600">
@@ -156,12 +203,15 @@ const AddUserForm = ({ setShowUserForm, setReloadTrigger }) => {
                                     <p className="text-sm sm:text-base text-gray-600">
                                         Click to upload image
                                     </p>
+                                    <p className="text-xs text-gray-400">
+                                        JPEG, PNG, JPG, GIF (max 2MB)
+                                    </p>
                                 </div>
                             )}
                             <input
                                 type="file"
                                 name="image"
-                                accept="image/*"
+                                accept="image/jpeg,image/png,image/jpg,image/gif"
                                 onChange={handleChange}
                                 className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                                 aria-label="Upload profile image"
@@ -175,7 +225,7 @@ const AddUserForm = ({ setShowUserForm, setReloadTrigger }) => {
                             htmlFor="name"
                             className="block text-sm font-medium text-gray-700 mb-1"
                         >
-                            Full Name *
+                            Full Name <span className="text-red-500">*</span>
                         </label>
                         <input
                             id="name"
@@ -195,7 +245,7 @@ const AddUserForm = ({ setShowUserForm, setReloadTrigger }) => {
                             htmlFor="email"
                             className="block text-sm font-medium text-gray-700 mb-1"
                         >
-                            Email Address *
+                            Email Address <span className="text-red-500">*</span>
                         </label>
                         <input
                             id="email"
@@ -215,7 +265,7 @@ const AddUserForm = ({ setShowUserForm, setReloadTrigger }) => {
                             htmlFor="password"
                             className="block text-sm font-medium text-gray-700 mb-1"
                         >
-                            Password *
+                            Password <span className="text-red-500">*</span>
                         </label>
                         <div className="relative">
                             <input
@@ -225,7 +275,8 @@ const AddUserForm = ({ setShowUserForm, setReloadTrigger }) => {
                                 value={userForm.password}
                                 onChange={handleChange}
                                 required
-                                placeholder="Enter password"
+                                placeholder="Enter password (min 6 characters)"
+                                minLength="6"
                                 className="w-full px-3 py-2 sm:py-2.5 pr-10 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm sm:text-base"
                             />
                             <button
@@ -241,6 +292,9 @@ const AddUserForm = ({ setShowUserForm, setReloadTrigger }) => {
                                 )}
                             </button>
                         </div>
+                        <p className="text-xs text-gray-500 mt-1">
+                            Minimum 6 characters
+                        </p>
                     </div>
 
                     {/* Action Buttons */}
@@ -248,7 +302,7 @@ const AddUserForm = ({ setShowUserForm, setReloadTrigger }) => {
                         <button
                             type="submit"
                             disabled={submitting}
-                            className="bg-blue-600 hover:bg-blue-700 text-white py-2.5 px-4 rounded-md flex items-center justify-center space-x-2 transition disabled:opacity-50 text-sm sm:text-base"
+                            className="bg-blue-600 hover:bg-blue-700 text-white py-2.5 px-4 rounded-md flex items-center justify-center space-x-2 transition disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base flex-1"
                         >
                             <Save className="w-4 h-4" />
                             <span>{submitting ? "Adding..." : "Add User"}</span>
@@ -256,7 +310,8 @@ const AddUserForm = ({ setShowUserForm, setReloadTrigger }) => {
                         <button
                             type="button"
                             onClick={onClose}
-                            className="bg-gray-300 hover:bg-gray-400 text-gray-700 py-2.5 px-4 rounded-md transition text-sm sm:text-base"
+                            disabled={submitting}
+                            className="bg-gray-300 hover:bg-gray-400 text-gray-700 py-2.5 px-4 rounded-md transition text-sm sm:text-base flex-1 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             Cancel
                         </button>

@@ -9,6 +9,14 @@ const AdminNavBar = ({ onMenuToggle }) => {
     const user = auth?.user;
     const imgurl = import.meta.env.VITE_IMAGE_PATH;
 
+    // Get first letter of user's name for avatar fallback
+    const getUserInitial = () => {
+        if (user?.name) {
+            return user.name.charAt(0).toUpperCase();
+        }
+        return "G"; // G for Guest
+    };
+
     const toggleUserMenu = () => {
         setIsUserMenuOpen((prev) => !prev);
     };
@@ -88,7 +96,7 @@ const AdminNavBar = ({ onMenuToggle }) => {
                                 aria-haspopup="true"
                             >
                                 <div className="flex items-center space-x-3">
-                                    <div className="w-8 h-8 rounded-full flex items-center justify-center overflow-hidden bg-gray-200">
+                                    <div className="w-8 h-8 rounded-full flex items-center justify-center overflow-hidden bg-gradient-to-br from-blue-500 to-blue-600">
                                         {user?.image ? (
                                             <img
                                                 src={`${imgurl}/${user.image}`}
@@ -99,14 +107,15 @@ const AdminNavBar = ({ onMenuToggle }) => {
                                                 onError={(e) => {
                                                     e.target.style.display =
                                                         "none";
+                                                    // Show initial when image fails to load
+                                                    e.target.parentElement.classList.add("flex", "items-center", "justify-center");
                                                 }}
                                             />
                                         ) : (
-                                            <img
-                                                src="/images/placeholder.png"
-                                                alt="Placeholder"
-                                                className="w-full h-full rounded-full object-cover"
-                                            />
+                                            // Show user initial when no image
+                                            <span className="text-white font-medium text-sm">
+                                                {getUserInitial()}
+                                            </span>
                                         )}
                                     </div>
                                     <div className="hidden sm:block text-left">

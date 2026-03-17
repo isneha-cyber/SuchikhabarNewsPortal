@@ -53,7 +53,7 @@ const SidebarItem = ({ story, index }) => {
             className="text-[1.1rem] font-black leading-none"
             style={{
               color:      isTop3 ? catColor : '#d4cfc8',
-              fontFamily: 'Georgia, serif',
+              
             }}
           >
             {String(index + 1).padStart(2, '0')}
@@ -73,7 +73,7 @@ const SidebarItem = ({ story, index }) => {
           {/* Title */}
           <h4
             className="text-[0.88rem] font-semibold leading-[1.4] text-[#1c1711] group-hover:text-[#8B0000] transition-colors line-clamp-2"
-            style={{ fontFamily: "'Noto Serif Devanagari', serif" }}
+          
           >
             {story.title}
           </h4>
@@ -90,7 +90,7 @@ const SidebarItem = ({ story, index }) => {
 
         {/* ── Right: thumbnail (if available) ── */}
         {story.image && (
-          <div className="flex-shrink-0 w-[62px] h-[50px] overflow-hidden rounded-sm bg-gray-100">
+          <div className="flex-shrink-0 w-[62px] h-[50px] overflow-hidden rounded-md bg-gray-100">
             <img
               src={story.image}
               alt={story.title}
@@ -129,7 +129,7 @@ const RightSidebar = ({ stories = [] }) => {
 
       {/* ── Stories list ── */}
       {stories.length > 0 ? (
-        <div className="bg-white border border-[rgba(0,0,0,0.07)] overflow-hidden">
+        <div className="bg-white border border-[rgba(0,0,0,0.07)] overflow-hidden rounded-md">
           {stories.map((story, i) => (
             <div
               key={story.id}

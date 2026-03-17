@@ -36,10 +36,10 @@ const CategoryBadge = ({ category }) => (
 // ─── SINGLE SECONDARY CARD ────────────────────────────────────────────────────
 const SecondaryCard = ({ story }) => (
   <Link href={`/news/${story.slug || story.id}`} className="block group h-full">
-    <div className="bg-white border border-[rgba(0,0,0,0.07)] overflow-hidden h-full flex flex-col shadow-sm hover:shadow-md transition-shadow duration-300">
+    <div className="bg-white border rounded-md border-[rgba(0,0,0,0.07)] overflow-hidden h-full flex flex-col shadow-sm hover:shadow-md transition-shadow duration-300">
 
       {/* Image */}
-      <div className="relative overflow-hidden aspect-[16/10] flex-shrink-0">
+      <div className="relative overflow-hidden aspect-[16/10] flex-shrink-0 rounded-md">
         <img
           src={story.image}
           alt={story.title}
@@ -56,7 +56,7 @@ const SecondaryCard = ({ story }) => (
       <div className="p-4 flex flex-col flex-1">
         <h3
           className="text-[1.08rem] font-semibold leading-[1.55] text-[#1c1711] group-hover:text-[#8B0000] transition-colors line-clamp-3 flex-1"
-          style={{ fontFamily: "'Noto Serif Devanagari', serif" }}
+         
         >
           {story.title}
         </h3>

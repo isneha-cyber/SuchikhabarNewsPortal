@@ -12,11 +12,37 @@ use Illuminate\Support\Facades\Auth;
 class UserController extends Controller
 {
     /**
+     * Format user data with proper image URL
+     */
+    private function formatUserWithImageUrl($user)
+    {
+        if ($user->image) {
+            // Check if it's already a full URL
+            if (filter_var($user->image, FILTER_VALIDATE_URL)) {
+                $user->image_url = $user->image;
+            } else {
+                // Generate full URL for storage path
+                $user->image_url = asset('storage/' . $user->image);
+            }
+        } else {
+            $user->image_url = null;
+        }
+        
+        return $user;
+    }
+
+    /**
      * Display a listing of the users.
      */
     public function index()
     {
         $users = User::all();
+        
+        // Format each user with image URL
+        $users->transform(function ($user) {
+            return $this->formatUserWithImageUrl($user);
+        });
+        
         return response()->json($users);
     }
 
@@ -52,10 +78,13 @@ class UserController extends Controller
             'title' => 'Created new user (ID: ' . $user->id . ')',
         ]);
 
+        // Format user with image URL
+        $user = $this->formatUserWithImageUrl($user);
+
         return response()->json([
             'message' => 'User created successfully',
             'user'    => $user,
-        ], 201); // Added proper HTTP status code
+        ], 201);
     }
 
     /**
@@ -85,7 +114,7 @@ class UserController extends Controller
         if (!empty($validated['password'])) {
             $validated['password'] = Hash::make($validated['password']);
         } else {
-            unset($validated['password']); // don't overwrite if not provided
+            unset($validated['password']);
         }
 
         $user->update($validated);
@@ -96,6 +125,9 @@ class UserController extends Controller
             'ip_address' => $request->ip(),
             'title' => 'Updated user (ID: ' . $user->id . ')',
         ]);
+
+        // Format user with image URL
+        $user = $this->formatUserWithImageUrl($user);
 
         return response()->json([
             'message' => 'User updated successfully',
@@ -117,7 +149,7 @@ class UserController extends Controller
 
         $user->delete();
 
-        // Log deletion - Fixed the variable name from $userId to $id
+        // Log deletion
         Log::create([
             'name' => Auth::check() ? Auth::user()->name : 'Guest',
             'ip_address' => request()->ip(),
@@ -132,9 +164,10 @@ class UserController extends Controller
     /**
      * Display the specified user.
      */
-    public function show($id) // Added missing show method
+    public function show($id)
     {
         $user = User::findOrFail($id);
+        $user = $this->formatUserWithImageUrl($user);
         return response()->json($user);
     }
 }

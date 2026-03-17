@@ -138,12 +138,12 @@ const SideBar = ({
 
                     {/* Category */}
                     <Link
-                        href="/category"
+                        href="/categories"
                         className={`
                             flex items-center rounded-lg transition-colors duration-200 group relative
                             ${isCollapsed ? "p-3 justify-center" : "p-3"}
                             ${
-                                isActive("/category")
+                                isActive("/categories")
                                     ? "bg-gray-200 text-gray-600 "
                                     : "text-gray-600 hover:bg-gray-50"
                             }
@@ -154,7 +154,7 @@ const SideBar = ({
                             className={`
                             ${isCollapsed ? "w-5 h-5" : "w-5 h-5"}
                             ${
-                                isActive("/category")
+                                isActive("/categories")
                                     ? "text-gray-600"
                                     : "text-gray-500 group-hover:text-gray-700"
                             }

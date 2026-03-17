@@ -240,7 +240,7 @@ public function getCategorizedNews()
         // Get latest 4 news for each category (1 featured + 3 list items)
         $news = News::where('category', $category)
             ->latest('published_at') // Order by published date
-            ->take(4)
+            ->take(5)
             ->get(['id', 'heading as title', 'image', 'published_at', 'slug']);
         
         // Format the news items
@@ -251,6 +251,7 @@ public function getCategorizedNews()
                 'image' => $item->image ? asset('storage/' . $item->image) : 'https://via.placeholder.com/500x300?text=No+Image',
                 'time' => $item->published_at ? Carbon::parse($item->published_at)->diffForHumans() : 'भर्खरै',
                 'slug' => $item->slug,
+                'real_time' => $item->published_at
             ];
         });
         

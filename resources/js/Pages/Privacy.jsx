@@ -68,7 +68,6 @@ const Privacy = () => {
               <div className="w-[5px] h-9 rounded-sm flex-shrink-0 bg-white/40" />
               <h1
                 className="text-[1.7rem] md:text-[2rem] font-black text-white leading-none tracking-tight"
-                style={{ fontFamily: "'Noto Serif Devanagari', Georgia, serif" }}
               >
                 Privacy Policy
               </h1>
@@ -84,7 +83,6 @@ const Privacy = () => {
           <div className="border-l-[3px] pl-5 mb-10" style={{ borderColor: '#00649b' }}>
             <h2
               className="text-[1.15rem] font-black text-[#1a1510] mb-3"
-              style={{ fontFamily: "'Noto Serif Devanagari', Georgia, serif" }}
             >
               Introduction
             </h2>
@@ -102,7 +100,6 @@ const Privacy = () => {
           <div>
             <h2
               className="text-[1.15rem] font-black text-black mb-6"
-              style={{ fontFamily: "'Noto Serif Devanagari', Georgia, serif" }}
             >
               Definitions
             </h2>
