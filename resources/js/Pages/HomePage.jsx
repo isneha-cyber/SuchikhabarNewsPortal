@@ -7,15 +7,18 @@ import HeroSection from '@/Suchikhabar/HeroSection'
 import Navbar from '@/Suchikhabar/Navbar'
 import React from 'react'
 
-const HomePage = ({categoryNews, latestNews}) => {
+const HomePage = ({heroData}) => {
+
+	
 	return (
 		<> {/* <LeaderboardBanner/>
       <TickerStrip/> */}
 			<Navbar/>
 
-			<HeroSection latestNews={latestNews}/> {/* <LeaderboardBanner/> */}
-			<CategorySection categoryNews={categoryNews}/>
+			<HeroSection heroData={heroData}/> {/* <LeaderboardBanner/> */}
+			<CategorySection/>
 			<Footer/>
+		
 		</>
 	)
 }

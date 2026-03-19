@@ -22,6 +22,7 @@ const EditBannerForm = ({
     const [imagePreview, setImagePreview] = useState(editingBanner.image);
     const [isSubmitted, setIsSubmitted] = useState(false);
     const [errors, setErrors] = useState({});
+    const imgurl = import.meta.env.VITE_IMAGE_PATH;
 
     useEffect(() => {
         setBannerForm({
@@ -129,7 +130,7 @@ const EditBannerForm = ({
                             {imagePreview ? (
                                 <div className="space-y-4">
                                     <img
-                                        src={imagePreview}
+                                        src={`${imgurl}/${imagePreview}`}
                                         alt="Preview"
                                         className="mx-auto h-32 w-32 object-cover rounded-lg shadow-lg"
                                     />

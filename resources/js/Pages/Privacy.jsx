@@ -39,7 +39,7 @@ const definitions = [
   {
     term: 'Website',
     text: 'refers to Newsportal, accessible from ',
-    link: 'https://newsportal.saitsolution.com.np/',
+    link: 'https://saitsolution.com.np/',
   },
   {
     term: 'You',
@@ -52,11 +52,12 @@ const Privacy = () => {
     <>
       <Navbar />
 
-      <div className="bg-white min-h-screen px-24">
+      {/* Removed fixed px-24 — it broke small screens */}
+      <div className="bg-white min-h-screen">
 
         {/* ── Page Hero ── */}
         <div className="border-b border-[rgba(0,0,0,0.07)]" style={{ background: '#00649b' }}>
-          <div className="max-w-4xl mx-auto px-4 md:px-8 py-10">
+          <div className="max-w-4xl mx-auto px-4 sm:px-6 md:px-8 py-8 sm:py-10">
             {/* Breadcrumb */}
             <nav className="flex items-center gap-1.5 text-[0.75rem] text-white/60 mb-4">
               <Link href="/" className="hover:text-white transition-colors">गृहपृष्ठ</Link>
@@ -66,9 +67,7 @@ const Privacy = () => {
 
             <div className="flex items-center gap-3">
               <div className="w-[5px] h-9 rounded-sm flex-shrink-0 bg-white/40" />
-              <h1
-                className="text-[1.7rem] md:text-[2rem] font-black text-white leading-none tracking-tight"
-              >
+              <h1 className="text-[1.4rem] sm:text-[1.7rem] md:text-[2rem] font-black text-white leading-none tracking-tight">
                 Privacy Policy
               </h1>
             </div>
@@ -77,20 +76,18 @@ const Privacy = () => {
         </div>
 
         {/* ── Main Content ── */}
-        <div className="max-w-4xl mx-auto px-4 md:px-8 py-10">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 md:px-8 py-8 sm:py-10">
 
           {/* ── Intro Block ── */}
-          <div className="border-l-[3px] pl-5 mb-10" style={{ borderColor: '#00649b' }}>
-            <h2
-              className="text-[1.15rem] font-black text-[#1a1510] mb-3"
-            >
+          <div className="border-l-[3px] pl-4 sm:pl-5 mb-8 sm:mb-10" style={{ borderColor: '#00649b' }}>
+            <h2 className="text-[1.05rem] sm:text-[1.15rem] font-black text-[#1a1510] mb-3">
               Introduction
             </h2>
-            <p className="text-[0.92rem] text-[#4a4039] leading-[1.85]">
+            <p className="text-[0.88rem] sm:text-[0.92rem] text-[#4a4039] leading-[1.85]">
               This Privacy Policy describes Our policies and procedures on the collection, use and disclosure of Your
               information when You use the Service and tells You about Your privacy rights and how the law protects You.
             </p>
-            <p className="text-[0.92rem] text-[#4a4039] leading-[1.85] mt-3">
+            <p className="text-[0.88rem] sm:text-[0.92rem] text-[#4a4039] leading-[1.85] mt-3">
               We use Your Personal data to provide and improve the Service. By using the Service, You agree to the
               collection and use of information in accordance with this Privacy Policy.
             </p>
@@ -98,9 +95,7 @@ const Privacy = () => {
 
           {/* ── Definitions ── */}
           <div>
-            <h2
-              className="text-[1.15rem] font-black text-black mb-6"
-            >
+            <h2 className="text-[1.05rem] sm:text-[1.15rem] font-black text-black mb-5 sm:mb-6">
               Definitions
             </h2>
 
@@ -108,17 +103,17 @@ const Privacy = () => {
               {definitions.map((def, i) => (
                 <div
                   key={i}
-                  className="py-4 border-b border-[rgba(0,0,0,0.08)] last:border-b-0"
+                  className="py-3.5 sm:py-4 border-b border-[rgba(0,0,0,0.08)] last:border-b-0"
                 >
-                  <span className="text-[0.88rem] font-black text-black">{def.term} </span>
-                  <span className="text-[0.88rem] text-[#3a3330] leading-[1.75]">
+                  <span className="text-[0.85rem] sm:text-[0.88rem] font-black text-black">{def.term} </span>
+                  <span className="text-[0.85rem] sm:text-[0.88rem] text-[#3a3330] leading-[1.75]">
                     {def.text}
                     {def.link && (
                       <a
                         href={def.link}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="font-semibold underline underline-offset-2 ml-0.5 transition-colors"
+                        className="font-semibold underline underline-offset-2 ml-0.5 transition-colors break-all"
                         style={{ color: '#00649b' }}
                       >
                         {def.link}
@@ -131,13 +126,13 @@ const Privacy = () => {
           </div>
 
           {/* ── Footer note ── */}
-          <div className="mt-10 pt-6 border-t border-[rgba(0,0,0,0.07)] flex items-center justify-between flex-wrap gap-3">
+          <div className="mt-8 sm:mt-10 pt-5 sm:pt-6 border-t border-[rgba(0,0,0,0.07)] flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <p className="text-[0.75rem] text-[#b0a498]">
               If you have questions about this policy, please contact us.
             </p>
             <Link
               href="/"
-              className="text-[0.75rem] font-bold px-4 py-2 text-white transition-opacity hover:opacity-80"
+              className="text-[0.75rem] font-bold px-4 py-2 text-white transition-opacity hover:opacity-80 text-center sm:text-left w-full sm:w-auto"
               style={{ background: '#00649b' }}
             >
               ← गृहपृष्ठमा फर्कनुहोस्

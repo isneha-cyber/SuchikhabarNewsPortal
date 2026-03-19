@@ -5,6 +5,8 @@ const BannerStrip = () => {
   const [banners, setBanners] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const imgurl = import.meta.env.VITE_IMAGE_PATH;
+
 
   useEffect(() => {
     fetchSquareBanners();
@@ -79,7 +81,7 @@ const BannerStrip = () => {
               className="block"
             >
               <img
-                src={banner.image}
+                src={`${imgurl}/${banner.image}` }
                 alt={`Square Banner ${index + 1}`}
                 className="w-full h-auto object-contain"
               />

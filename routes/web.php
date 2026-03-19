@@ -8,19 +8,180 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\HeadingController;
 use App\Http\Controllers\LogController;
+use App\Http\Controllers\HerosectionController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
+use Illuminate\Support\Facades\Http;
+use App\Models\Heading;
+use App\Models\News;
 
 
+// Route::get('/', function () {
+//     return Inertia::render('Welcome', [
+//         'canLogin' => Route::has('login'),
+//         'canRegister' => Route::has('register'),
+//         'laravelVersion' => Application::VERSION,
+//         'phpVersion' => PHP_VERSION,
+//     ]);
+// });
+
+// ── Home Page ────────────────────────────────────────────────────────────────
 Route::get('/', function () {
+ 
+    // ── Featured (Headings) ──────────────────────────────────────────────
+    $featured = Heading::latest()->get();
+ 
+    // ── Secondary Grid (3 articles from 3 different categories) ─────────
+    $picked   = collect();
+    $usedCats = [];
+ 
+    // Pass 1: direct category column
+    $directNews = News::whereNotNull('category')
+        ->where('category', '!=', '')
+        ->latest()
+        ->limit(30)
+        ->get();
+ 
+    foreach ($directNews as $news) {
+        if ($picked->count() >= 3) break;
+        if (in_array($news->category, $usedCats, true)) continue;
+        $picked->push($news);
+        $usedCats[] = $news->category;
+    }
+ 
+    // Pass 2: pivot table
+    if ($picked->count() < 3) {
+        $pivotRows = DB::table('article_category')
+            ->join('categories', 'article_category.category_id', '=', 'categories.id')
+            ->join('news', 'article_category.article_id', '=', 'news.id')
+            ->select(
+                'news.id',
+                'news.heading',
+                'news.description',
+                'news.image',
+                'news.slug',
+                'news.published_at',
+                'news.created_at',
+                'categories.name as cat_name',
+                'categories.slug as cat_slug'
+            )
+            ->whereNotIn('news.id', $picked->pluck('id'))
+            ->orderBy('news.id', 'desc')
+            ->limit(30)
+            ->get();
+ 
+        foreach ($pivotRows as $row) {
+            if ($picked->count() >= 3) break;
+            $label = $row->cat_name ?? $row->cat_slug ?? 'समाचार';
+            if (in_array($label, $usedCats, true)) continue;
+            $picked->push($row);
+            $usedCats[] = $label;
+        }
+    }
+ 
+    // Pass 3: fallback
+    if ($picked->count() < 3) {
+        $fallback = News::whereNotIn('id', $picked->pluck('id'))
+            ->latest()
+            ->limit(10)
+            ->get();
+ 
+        foreach ($fallback as $news) {
+            if ($picked->count() >= 3) break;
+            $picked->push($news);
+        }
+    }
+ 
+    $secondary = $picked->values();
+ 
+    // ── Sidebar (latest 5 from different categories) ─────────────────────
+    $pickedSidebar   = collect();
+    $usedCatsSidebar = [];
+    $count           = 5;
+ 
+    // Pass 1: direct category column
+    $directNewsSidebar = News::whereNotNull('category')
+        ->where('category', '!=', '')
+        ->latest()
+        ->limit(50)
+        ->get();
+ 
+    foreach ($directNewsSidebar as $news) {
+        if ($pickedSidebar->count() >= $count) break;
+        if (in_array($news->category, $usedCatsSidebar, true)) continue;
+        $pickedSidebar->push($news);
+        $usedCatsSidebar[] = $news->category;
+    }
+ 
+    // Pass 2: pivot table
+    if ($pickedSidebar->count() < $count) {
+        $pivotRowsSidebar = DB::table('article_category')
+            ->join('categories', 'article_category.category_id', '=', 'categories.id')
+            ->join('news', 'article_category.article_id', '=', 'news.id')
+            ->select(
+                'news.id',
+                'news.heading',
+                'news.description',
+                'news.image',
+                'news.slug',
+                'news.published_at',
+                'news.created_at',
+                'categories.name as cat_name',
+                'categories.slug as cat_slug'
+            )
+            ->whereNotIn('news.id', $pickedSidebar->pluck('id'))
+            ->orderBy('news.id', 'desc')
+            ->limit(50)
+            ->get();
+ 
+        foreach ($pivotRowsSidebar as $row) {
+            if ($pickedSidebar->count() >= $count) break;
+            $label = $row->cat_name ?? $row->cat_slug ?? 'समाचार';
+            if (in_array($label, $usedCatsSidebar, true)) continue;
+            $pickedSidebar->push($row);
+            $usedCatsSidebar[] = $label;
+        }
+    }
+ 
+    // Pass 3: fallback
+    if ($pickedSidebar->count() < $count) {
+        $fallbackSidebar = News::whereNotIn('id', $pickedSidebar->pluck('id'))
+            ->latest()
+            ->limit($count * 2)
+            ->get();
+ 
+        foreach ($fallbackSidebar as $news) {
+            if ($pickedSidebar->count() >= $count) break;
+            $pickedSidebar->push($news);
+        }
+    }
+ 
+    $sidebar = $pickedSidebar->values();
+ 
+    // ── Render ───────────────────────────────────────────────────────────
     return Inertia::render('Welcome', [
-        'canLogin' => Route::has('login'),
-        'canRegister' => Route::has('register'),
+        'canLogin'       => Route::has('login'),
+        'canRegister'    => Route::has('register'),
         'laravelVersion' => Application::VERSION,
-        'phpVersion' => PHP_VERSION,
+        'phpVersion'     => PHP_VERSION,
+ 
+        'heroData' => [
+            'featured'  => $featured,
+            'secondary' => ['status' => true, 'data' => $secondary],
+            'sidebar'   => ['status' => true, 'data' => $sidebar],
+        ],
     ]);
 });
+ 
+
+ 
+
+ 
+// ── API Routes (keep these for any direct API access if still needed) ─────────
+Route::get('/headings', [HeadingController::class, 'index'])->name('headings.index');
+Route::get('/hero/secondary-grid', [HeroSectionController::class, 'secondaryGrid']);
+Route::get('/hero/sidebar', [HeroSectionController::class, 'sidebar']);
 
 Route::get('/dashboard', function () {
     return Inertia::render('Dashboard');
@@ -121,5 +282,13 @@ Route::get('/hamro-team', function () {
 Route::get('/privacy-policy', function () {
     return Inertia::render('Privacy');
 });
+
+// Secondary Grid  →  GET /hero/secondary-grid
+// Returns 3 articles from 3 distinct categories
+Route::get('/hero/secondary-grid', [HeroSectionController::class, 'secondaryGrid']);
+ 
+// Right Sidebar   →  GET /hero/sidebar?count=5
+// Returns latest N articles (default 5) with resolved category labels
+Route::get('/hero/sidebar', [HeroSectionController::class, 'sidebar']);
 
 require __DIR__.'/auth.php';

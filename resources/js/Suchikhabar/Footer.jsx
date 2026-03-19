@@ -18,10 +18,9 @@ const CATEGORIES = [
 const USEFUL_LINKS = [
   { label: 'गृहपृष्ठ',          href: '/' },
   { label: 'हाम्रो टिम',        href: '/hamro-team' },
-  { label: 'गोपनीयता नीति',     href: '/category/अर्थतन्त्र' },
+  { label: 'गोपनीयता नीति',     href: '/' },
   { label: 'विज्ञापन सम्पर्क',  href: 'https://www.facebook.com/ShuchiKhabar' },
-  { label: 'समाचार पठाउनुहोस्', href: 'https://www.facebook.com/ShuchiKhabar' },
-  { label: 'सेवाका सर्तहरू',    href: '/privacy-policy' },
+  { label: ' प्राइभेसी पोलिसी',    href: '/privacy-policy' },
 ];
 
 const SOCIAL_LINKS = [
@@ -123,11 +122,9 @@ const Footer = () => (
 
           <SectionHeading>हाम्रो बारेमा</SectionHeading>
 
-          <p className="text-[0.84rem] text-white/65 leading-[1.8] mb-4">
-            शुचीखबर नेपालको एक विश्वसनीय अनलाइन समाचार पोर्टल हो। यो पोर्टलले नेपाली भाषामा
-            राजनीति, अर्थतन्त्र, खेलकुद, मनोरञ्जन, कृषि, स्वास्थ्य लगायत विभिन्न क्षेत्रका
-            ताजा समाचार र विश्लेषण प्रदान गर्दछ।
-          </p>
+          {/* <p className="text-[0.84rem] text-white/65 leading-[1.8] mb-4">
+         शुचीखबर नेपालको एक विश्वसनीय अनलाइन समाचार पोर्टल हो, जसले नेपाली भाषामा विभिन्न क्षेत्रका ताजा समाचार प्रदान गर्दछ।
+          </p> */}
 
           {/* Address */}
           <div className="mt-2 space-y-1">
@@ -169,7 +166,7 @@ const Footer = () => (
           </ul>
 
           {/* Social icons */}
-          <div className="mt-auto">
+          <div className="mt-2">
             <p className="text-[0.75rem] text-white/40 uppercase tracking-widest mb-3 font-medium">
               सामाजिक सञ्जाल
             </p>

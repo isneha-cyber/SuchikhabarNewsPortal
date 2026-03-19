@@ -73,7 +73,7 @@ const News = () => {
                     }
                 });
                 
-                console.log("API Response:", response.data);
+                //console.log("API Response:", response.data);
                 
                 // Handle the paginated response structure
                 if (response.data?.data) {
@@ -234,7 +234,7 @@ const News = () => {
         [isMobileView, filters.page, filters.per_page]
     );
 
-    console.log("newsData", newsData); // Debug: check what data is being set
+    // console.log("newsData", newsData); // Debug: check what data is being set
 
     return (
         <AdminWrapper>

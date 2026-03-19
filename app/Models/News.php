@@ -3,7 +3,6 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Str;
 
 class News extends Model
 {
@@ -15,45 +14,40 @@ class News extends Model
         'published_at',
         'category',
         'pdf',
-        'slug' // Added slug to fillable
+        'slug',
     ];
 
     protected static function boot()
     {
         parent::boot();
 
-        // Before creating
-        // static::creating(function ($news) {
-        //     if (empty($news->slug)) {
-        //         $news->slug = Str::slug($news->heading);
-        //     }
-        // });
+        // ✅ FIX: Use 'creating' instead of 'saving'
+        // 'saving' fired on EVERY update, regenerating slugs and breaking old links
+        // 'creating' only fires once when the record is first created
+        static::creating(function ($model) {
+            if (empty($model->slug)) {
+                // Keep Nepali characters, replace spaces or "/" with "-"
+                $slug = preg_replace('/[\s\/]+/u', '-', trim($model->heading));
 
-        // // After creating -> append ID to make slug unique
-        // static::created(function ($news) {
-        //     $baseSlug = Str::slug($news->heading);
-        //     $news->slug = $baseSlug . '-' . $news->id;
-        //     $news->saveQuietly(); // prevents infinite loop
-        // });
+                // Remove question marks
+                $slug = str_replace('?', '', $slug);
 
-        // // Before updating -> update slug if heading changes
-        // static::updating(function ($news) {
-        //     if ($news->isDirty('heading')) {
-        //         $baseSlug = Str::slug($news->heading);
-        //         $news->slug = $baseSlug . '-' . $news->id;
-        //     }
-        // });
-        static::saving(function ($model) {
-            $slug = preg_replace('/[\s\/]+/', '-', $model->heading);
-            $slug = str_replace('?', '', $slug);
-            $model->slug = $slug;
+                // Append random number to ensure uniqueness
+                $randomNumber = rand(1000, 99999);
+
+                $model->slug = $slug . '-' . $randomNumber;
+            }
         });
     }
 
+    public function category()
+    {
+        return $this->belongsTo(Category::class);
+    }
 
-
-public function category()
-{
-    return $this->belongsTo(Category::class);
-}
+    public function categories()
+    {
+        // article_id on pivot acts as news_id
+        return $this->belongsToMany(Category::class, 'article_category', 'article_id', 'category_id');
+    }
 }

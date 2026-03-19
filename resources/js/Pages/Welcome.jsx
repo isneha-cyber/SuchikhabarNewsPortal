@@ -364,11 +364,13 @@
 import { Head, Link } from '@inertiajs/react';
 import HomePage from './HomePage';
 
-export default function Welcome({ auth }) {
+export default function Welcome({ auth,heroData  }) {
+ 
     return (
         <>
-            <Head title="Home" />
-            <HomePage/>
+       
+            <Head title="Suchikhabar | Best Newsportal in Nepal" />
+            <HomePage heroData={heroData}/>
               
 
             

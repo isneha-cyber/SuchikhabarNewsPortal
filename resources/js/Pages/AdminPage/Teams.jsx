@@ -23,11 +23,11 @@ const Teams = () => {
             try {
                 // Get the full URL from route helper
                 const url = route("team.index");
-                console.log("Fetching from URL:", url);
+                // console.log("Fetching from URL:", url);
                 
                 const response = await axios.get(url);
-                console.log("Full API Response:", response);
-                console.log("Response Data:", response.data);
+                // console.log("Full API Response:", response);
+                // console.log("Response Data:", response.data);
 
                 // Handle different response formats
                 let teams = [];
@@ -52,7 +52,7 @@ const Teams = () => {
                     }
                 }
 
-                console.log("Processed teams:", teams);
+                // console.log("Processed teams:", teams);
                 setAllTeams(teams);
                 
                 if (teams.length === 0) {
@@ -66,9 +66,9 @@ const Teams = () => {
                 // Show more detailed error message
                 if (error.response) {
                     // The request was made and the server responded with a status code
-                    console.error("Error response data:", error.response.data);
-                    console.error("Error response status:", error.response.status);
-                    console.error("Error response headers:", error.response.headers);
+                    // console.error("Error response data:", error.response.data);
+                    // console.error("Error response status:", error.response.status);
+                    // console.error("Error response headers:", error.response.headers);
                     
                     alert(`Failed to load team members: Server error (${error.response.status})`);
                 } else if (error.request) {

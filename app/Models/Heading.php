@@ -18,35 +18,23 @@ class Heading extends Model
         'slug' 
     ];
 
-    protected static function boot()
-    {
-        parent::boot();
+protected static function boot()
+{
+    parent::boot();
 
-        // Before creating
-        // static::creating(function ($news) {
-        //     if (empty($news->slug)) {
-        //         $news->slug = Str::slug($news->heading);
-        //     }
-        // });
+    static::saving(function ($model) {
 
-        // // After creating -> append ID to make slug unique
-        // static::created(function ($news) {
-        //     $baseSlug = Str::slug($news->heading);
-        //     $news->slug = $baseSlug . '-' . $news->id;
-        //     $news->saveQuietly(); // prevents infinite loop
-        // });
+        // Keep Nepali characters and replace spaces or "/" with "-"
+        $slug = preg_replace('/[\s\/]+/u', '-', trim($model->heading));
 
-        // // Before updating -> update slug if heading changes
-        // static::updating(function ($news) {
-        //     if ($news->isDirty('heading')) {
-        //         $baseSlug = Str::slug($news->heading);
-        //         $news->slug = $baseSlug . '-' . $news->id;
-        //     }
-        // });
-        static::saving(function ($model) {
-            $slug = preg_replace('/[\s\/]+/', '-', $model->heading);
-            $slug = str_replace('?', '', $slug);
-            $model->slug = $slug;
-        });
-    }
+        // Remove question marks
+        $slug = str_replace('?', '', $slug);
+
+        // Generate random number
+        $randomNumber = rand(1000, 99999);
+
+        // Append random number
+        $model->slug = $slug . '-' . $randomNumber;
+    });
+}
 }

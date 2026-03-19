@@ -25,6 +25,29 @@ class CategoryController extends Controller
 /**
  * Display the category page with its news.
  */
+// public function showDetails($slug, Request $request)
+// {
+//     $perPage = 16;
+
+//     // Get category
+//     $category = Category::where('slug', $slug)->firstOrFail();
+
+//     // Get news for this category
+//     $news = News::where('category', $category->name)
+//         ->latest('published_at')
+//         ->paginate($perPage)
+//         ->withQueryString(); // Important for pagination
+
+//     return Inertia::render('CategoryPage', [
+//         'category' => [
+//             'id'   => $category->id,
+//             'name' => $category->name,
+//             'slug' => $category->slug,
+//         ],
+//         'news' => $news,
+//     ]);
+// }
+
 public function showDetails($slug, Request $request)
 {
     $perPage = 16;
@@ -32,11 +55,16 @@ public function showDetails($slug, Request $request)
     // Get category
     $category = Category::where('slug', $slug)->firstOrFail();
 
-    // Get news for this category
-    $news = News::where('category', $category->name)
-        ->latest('published_at')
-        ->paginate($perPage)
-        ->withQueryString(); // Important for pagination
+    // Get news: first try inline category field, then fall back to pivot table
+    $news = News::where(function ($query) use ($category) {
+                $query->where('category', $category->name)          // inline field
+                      ->orWhereHas('categories', function ($q) use ($category) {
+                          $q->where('category_id', $category->id);  // pivot table
+                      });
+            })
+            ->latest('published_at')
+            ->paginate($perPage)
+            ->withQueryString();
 
     return Inertia::render('CategoryPage', [
         'category' => [

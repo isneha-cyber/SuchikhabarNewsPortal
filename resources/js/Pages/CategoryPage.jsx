@@ -1,3 +1,7 @@
+
+
+
+
 import React, { useRef, useState, useEffect } from 'react';
 import { Link, Head } from '@inertiajs/react';
 import Navbar from '@/Suchikhabar/Navbar';
@@ -5,6 +9,7 @@ import Footer from '@/Suchikhabar/Footer';
 import LeaderboardBanner from '@/Ads/LeaderboardBanner';
 import SidebarBanner     from '@/Ads/SidebarBanner';
 import NepaliDate from "nepali-date-converter";
+
 // ─── ICONS ────────────────────────────────────────────────────────────────────
 const ClockIcon = () => (
   <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
@@ -17,6 +22,45 @@ const EyeIcon = () => (
   </svg>
 );
 
+// ─── PLACEHOLDER IMAGE ────────────────────────────────────────────────────────
+// Handles both missing src (null/undefined/"") and broken URLs (404/network error).
+// Drop-in replacement for <img> — accepts same className/style props.
+const PlaceholderImg = ({ src, alt = '', className = '', style = {}, onLoad }) => {
+  const [failed, setFailed] = useState(!src);
+
+  useEffect(() => { setFailed(!src); }, [src]);
+
+  if (failed) {
+    return (
+      <div
+        className={`${className} flex flex-col items-center justify-center bg-[#ede9e4] text-[#c5bdb4]`}
+        style={style}
+      >
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" strokeWidth="1.3"
+          strokeLinecap="round" strokeLinejoin="round" className="opacity-40">
+          <rect x="3" y="3" width="18" height="18" rx="2"/>
+          <path d="M7 8h10M7 12h6M7 16h4"/>
+          <rect x="13" y="11" width="4" height="4" rx="0.5"/>
+        </svg>
+        <span className="text-[0.58rem] mt-1 tracking-wide opacity-50">तस्वीर छैन</span>
+      </div>
+    );
+  }
+
+  return (
+    <img
+      src={src}
+      alt={alt}
+      className={className}
+      style={style}
+      onLoad={onLoad}
+      onError={() => setFailed(true)}
+    />
+  );
+};
+
+// ─── HELPERS ──────────────────────────────────────────────────────────────────
 const toNepaliDigits = (num) => {
   const nepaliNums = ['०','१','२','३','४','५','६','७','८','९'];
   return String(num).split('').map(d => nepaliNums[d] ?? d).join('');
@@ -24,37 +68,23 @@ const toNepaliDigits = (num) => {
 
 const getNepaliDate = (dateString) => {
   if (!dateString) return 'नयाँ';
-
   try {
     const date = new Date(dateString);
     const nepaliDate = new NepaliDate(date);
-
     const nepaliMonths = [
       "वैशाख","जेठ","असार","साउन","भदौ","असोज",
       "कार्तिक","मंसिर","पुष","माघ","फागुन","चैत्र"
     ];
-
     const nepaliWeekdays = [
       "आइतबार","सोमबार","मङ्गलबार",
       "बुधबार","बिहिबार","शुक्रबार","शनिबार"
     ];
-
-    const day = toNepaliDigits(nepaliDate.getDate());
-    const month = nepaliMonths[nepaliDate.getMonth()];
-    const year = toNepaliDigits(nepaliDate.getYear());
-    const weekday = nepaliWeekdays[date.getDay()];
-
-    return `${day} ${month} ${year}, ${weekday}`;
-
+    return `${toNepaliDigits(nepaliDate.getDate())} ${nepaliMonths[nepaliDate.getMonth()]} ${toNepaliDigits(nepaliDate.getYear())}, ${nepaliWeekdays[date.getDay()]}`;
   } catch {
     return 'मिति उपलब्ध छैन';
   }
 };
 
-
-
-
-// ─── HELPERS ──────────────────────────────────────────────────────────────────
 const stripHtml = (html) => {
   if (!html) return '';
   const tmp = document.createElement('DIV');
@@ -79,19 +109,19 @@ const CATEGORY_COLORS = {
 };
 const getCategoryColor = (name) => CATEGORY_COLORS[name] || '#8B0000';
 
+const imgurl = import.meta.env.VITE_IMAGE_PATH;
+
 const transformItem = (item) => ({
-  id: item.id,
-  title: item.heading || item.title || '',
-  slug: item.slug || String(item.id),
-  image: item.image ? `/storage/${item.image}` : null,
-
-  time: item.published_at
-    ? getNepaliDate(item.published_at)
-    : (item.created_at ? getNepaliDate(item.created_at) : 'नयाँ'),
-
-  author: item.blog_by || item.author || 'समाचार टोली',
-  excerpt: item.description ? stripHtml(item.description).slice(0,140)+'…' : '',
-  views: item.views || 0,
+  id:       item.id,
+  title:    item.heading || item.title || '',
+  slug:     item.slug || String(item.id),
+  image:    item.image ? `${imgurl}/${item.image}` : '',   // '' → PlaceholderImg shows immediately
+  time:     item.published_at
+              ? getNepaliDate(item.published_at)
+              : (item.created_at ? getNepaliDate(item.created_at) : 'नयाँ'),
+  author:   item.blog_by || item.author || 'समाचार टोली',
+  excerpt:  item.description ? stripHtml(item.description).slice(0, 140) + '…' : '',
+  views:    item.views || 0,
   category: item.category || '',
 });
 
@@ -102,15 +132,13 @@ const FeaturedCard = ({ story, color }) => (
                         hover:border-[rgba(0,0,0,0.2)] hover:shadow-sm
                         transition-all duration-200 cursor-pointer flex flex-col h-full">
       <div className="relative overflow-hidden" style={{ paddingBottom: '56%' }}>
-        {story.image ? (
-          <img src={story.image} alt={story.title}
-               className="absolute inset-0 w-full h-full object-cover rounded-md
-                          transition-transform duration-500 group-hover:scale-[1.04]" />
-        ) : (
-          <div className="absolute inset-0 bg-[#e8e4df] flex items-center justify-center">
-            <span className="text-[0.7rem] text-[#b0a498]">तस्बिर छैन</span>
-          </div>
-        )}
+        {/* PlaceholderImg fills the same absolute box whether src exists or not */}
+        <PlaceholderImg
+          src={story.image}
+          alt={story.title}
+          className="absolute inset-0 w-full h-full object-cover rounded-md
+                     transition-transform duration-500 group-hover:scale-[1.04]"
+        />
         <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent pointer-events-none" />
         <div className="absolute bottom-0 left-0 right-0 h-[3px]" style={{ background: color }} />
         <div className="absolute bottom-2 left-2.5 flex items-center gap-1
@@ -120,8 +148,7 @@ const FeaturedCard = ({ story, color }) => (
       </div>
       <div className="p-3 flex flex-col flex-1">
         <h3 className="text-[1.92rem] font-bold leading-[1.42] text-[#1a1510]
-                       group-hover:text-[#8B0000] transition-colors line-clamp-3 flex-1 mb-2"
-            >
+                       group-hover:text-[#8B0000] transition-colors line-clamp-3 flex-1 mb-2">
           {story.title}
         </h3>
         {story.excerpt && (
@@ -149,19 +176,17 @@ const ListCard = ({ story, color }) => (
                         hover:border-[rgba(0,0,0,0.2)] hover:shadow-sm
                         transition-all duration-200 cursor-pointer">
       <div className="relative flex-shrink-0 overflow-hidden" style={{ width: 100, minHeight: 80 }}>
-        {story.image ? (
-          <img src={story.image} alt={story.title}
-               className="absolute inset-0 w-full h-full object-cover
-                          transition-transform duration-500 group-hover:scale-[1.07]" />
-        ) : (
-          <div className="absolute inset-0 bg-[#e8e4df]" />
-        )}
+        <PlaceholderImg
+          src={story.image}
+          alt={story.title}
+          className="absolute inset-0 w-full h-full object-cover
+                     transition-transform duration-500 group-hover:scale-[1.07]"
+        />
         <div className="absolute left-0 top-0 bottom-0 w-[3px]" style={{ background: color }} />
       </div>
       <div className="flex flex-col justify-between py-2.5 px-3 flex-1 min-w-0">
         <h3 className="text-[1.15rem] font-semibold leading-[1.4] text-[#1a1510]
-                       group-hover:text-[#8B0000] transition-colors line-clamp-2"
-           >
+                       group-hover:text-[#8B0000] transition-colors line-clamp-2">
           {story.title}
         </h3>
         <div className="flex items-center justify-between mt-1.5">
@@ -186,13 +211,12 @@ const NumberedCard = ({ story, index, color }) => (
                         border-b border-[rgba(0,0,0,0.06)] last:border-b-0
                         hover:bg-[#faf8f5] transition-colors cursor-pointer px-2">
       <span className="text-[0.95rem] font-black leading-none flex-shrink-0 w-5 text-right mt-0.5"
-            style={{ color: index < 3 ? color : '#d4cfc8'}}>
+            style={{ color: index < 3 ? color : '#d4cfc8' }}>
         {String(index + 1).padStart(2, '0')}
       </span>
       <div className="flex-1 min-w-0">
         <h4 className="text-[0.8rem] font-semibold leading-[1.4] text-[#1a1510]
-                       group-hover:text-[#8B0000] transition-colors line-clamp-2"
-     >
+                       group-hover:text-[#8B0000] transition-colors line-clamp-2">
           {story.title}
         </h4>
         <p className="text-[0.62rem] text-[#b0a498] mt-0.5 flex items-center gap-1">
@@ -263,7 +287,6 @@ const Pagination = ({ links, color }) => {
 
 // ─── MAIN COMPONENT ───────────────────────────────────────────────────────────
 const CategoryPage = ({ slug, category, news, moreNews }) => {
-
   const newsData = news?.data || [];
   const moreData = moreNews  || [];
 
@@ -272,7 +295,6 @@ const CategoryPage = ({ slug, category, news, moreNews }) => {
   const description  = category?.description || '';
 
   const stories = newsData.map(transformItem);
-
   const [hero, second, third, fourth, ...rest] = stories;
   const initialDisplay = [hero, second, third, fourth].filter(Boolean);
 
@@ -280,7 +302,6 @@ const CategoryPage = ({ slug, category, news, moreNews }) => {
     ? moreData.map(transformItem)
     : stories.slice(8, 13);
 
-  // ✅ Measure left column height, cap sidebar to match
   const mainRef = useRef(null);
   const [mainHeight, setMainHeight] = useState(null);
 
@@ -291,7 +312,7 @@ const CategoryPage = ({ slug, category, news, moreNews }) => {
     });
     observer.observe(mainRef.current);
     return () => observer.disconnect();
-  }, [stories.length]); // re-measure when stories change
+  }, [stories.length]);
 
   return (
     <>
@@ -299,7 +320,7 @@ const CategoryPage = ({ slug, category, news, moreNews }) => {
       <Navbar />
 
       <div className="bg-white min-h-screen">
-        <div className=" px-3 md:px-24 py-4">
+        <div className="px-3 md:px-24 py-4">
 
           {/* Breadcrumb */}
           <nav className="flex items-center gap-1.5 text-[0.72rem] text-[#b0a498] mb-3">
@@ -312,8 +333,7 @@ const CategoryPage = ({ slug, category, news, moreNews }) => {
           <div className="mb-4 pb-2.5 border-b-[3px]" style={{ borderColor: color }}>
             <div className="flex items-center gap-3">
               <div className="w-[5px] h-8 rounded-sm flex-shrink-0" style={{ background: color }} />
-              <h1 className="text-[1.4rem] md:text-[1.65rem] font-black tracking-wide uppercase leading-none"
-              >
+              <h1 className="text-[1.4rem] md:text-[1.65rem] font-black tracking-wide uppercase leading-none">
                 {categoryName}
               </h1>
             </div>
@@ -379,13 +399,10 @@ const CategoryPage = ({ slug, category, news, moreNews }) => {
               )}
             </main>
 
-            {/* RIGHT: Sidebar — capped to left column height */}
+            {/* RIGHT: Sidebar */}
             <aside
               className="hidden lg:flex flex-col gap-3 flex-shrink-0 overflow-hidden"
-              style={{
-                width: 268,
-                maxHeight: mainHeight ? `${mainHeight}px` : 'none',
-              }}
+              style={{ width: 268, maxHeight: mainHeight ? `${mainHeight}px` : 'none' }}
             >
               {sidebarList.length > 0 && (
                 <div className="bg-white border border-[rgba(0,0,0,0.08)] overflow-hidden">
@@ -403,7 +420,6 @@ const CategoryPage = ({ slug, category, news, moreNews }) => {
                   </div>
                 </div>
               )}
-
               <SidebarBanner />
             </aside>
 

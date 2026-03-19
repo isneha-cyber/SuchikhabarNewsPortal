@@ -5,28 +5,44 @@ namespace App\Http\Controllers;
 use App\Models\Banner;
 use App\Models\Log; // Import your Log model
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Facades\Auth; // To get logged-in user
-use Illuminate\Validation\ValidationException;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage; // To get logged-in user
 
 class BannerController extends Controller
 {
     /**
      * Display a listing of the banners.
      */
+    // public function index()
+    // {
+    //     $banners = Banner::all();
+
+    //     // Add full image URLs using storage URL
+    //     $banners = $banners->map(function ($banner) {
+    //         if ($banner->image) {
+    //             $banner->image = asset('storage/' . $banner->image);
+    //         }
+    //         return $banner;
+    //     });
+
+    //     // Log access
+    //     Log::create([
+    //         'name' => Auth::check() ? Auth::user()->name : 'Guest',
+    //         'ip_address' => request()->ip(),
+    //         'title' => 'Viewed banners list',
+    //     ]);
+
+    //     return response()->json([
+    //         'success' => true,
+    //         'message' => 'Banners retrieved successfully.',
+    //         'data' => $banners
+    //     ], 200);
+    // }
+
     public function index()
     {
-        $banners = Banner::all();
+        $banners = Banner::all(); // image value is already "banners/abc.gif"
 
-        // Add full image URLs using storage URL
-        $banners = $banners->map(function ($banner) {
-            if ($banner->image) {
-                $banner->image = asset('storage/' . $banner->image);
-            }
-            return $banner;
-        });
-
-        // Log access
         Log::create([
             'name' => Auth::check() ? Auth::user()->name : 'Guest',
             'ip_address' => request()->ip(),
@@ -36,7 +52,7 @@ class BannerController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Banners retrieved successfully.',
-            'data' => $banners
+            'data' => $banners, // sends raw path as-is
         ], 200);
     }
 
@@ -66,19 +82,19 @@ class BannerController extends Controller
         ]);
 
         // Append full URL
-        $banner->image = asset('storage/' . $banner->image);
+        $banner->image = asset('storage/'.$banner->image);
 
         // Log creation
         Log::create([
             'name' => Auth::check() ? Auth::user()->name : 'Guest',
             'ip_address' => $request->ip(),
-            'title' => 'Created new banner (ID: ' . $banner->id . ')',
+            'title' => 'Created new banner (ID: '.$banner->id.')',
         ]);
 
         return response()->json([
             'success' => true,
             'message' => 'Banner created successfully.',
-            'data' => $banner
+            'data' => $banner,
         ], 201);
     }
 
@@ -111,19 +127,19 @@ class BannerController extends Controller
         $banner->link = $validated['link'];
         $banner->save();
 
-        $banner->image = asset('storage/' . $banner->image);
+        $banner->image = asset('storage/'.$banner->image);
 
         // Log update
         Log::create([
             'name' => Auth::check() ? Auth::user()->name : 'Guest',
             'ip_address' => $request->ip(),
-            'title' => 'Updated banner (ID: ' . $banner->id . ')',
+            'title' => 'Updated banner (ID: '.$banner->id.')',
         ]);
 
         return response()->json([
             'success' => true,
             'message' => 'Banner updated successfully.',
-            'data' => $banner
+            'data' => $banner,
         ], 200);
     }
 
@@ -145,15 +161,12 @@ class BannerController extends Controller
         Log::create([
             'name' => Auth::check() ? Auth::user()->name : 'Guest',
             'ip_address' => request()->ip(),
-            'title' => 'Deleted banner (ID: ' . $bannerId . ')',
+            'title' => 'Deleted banner (ID: '.$bannerId.')',
         ]);
 
         return response()->json([
             'success' => true,
-            'message' => 'Banner deleted successfully.'
+            'message' => 'Banner deleted successfully.',
         ], 200);
     }
-
-
-
-    }
+}

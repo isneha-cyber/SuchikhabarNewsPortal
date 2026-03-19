@@ -37,6 +37,7 @@ const EditNewsForm = ({
     const [existingPdf, setExistingPdf] = useState(null);
     const [isSubmitted, setIsSubmitted] = useState(false);
 
+
     const imgurl = import.meta.env.VITE_IMAGE_PATH;
 
     useEffect(() => {
@@ -239,7 +240,7 @@ const EditNewsForm = ({
                                         {existingPdf.split("/").pop()}
                                     </p>
                                     <a
-                                        href={`/storage/${existingPdf}`}
+                                        href={`${imgurl}/${existingPdf}`}
                                         target="_blank"
                                         rel="noopener noreferrer"
                                         className="text-xs text-indigo-500 hover:underline block"

@@ -6,7 +6,7 @@ import axios from "axios";
 import { Pencil, Trash2, ExternalLink } from "lucide-react";
 import React, { useEffect, useState, useMemo } from "react";
 
-const imgurl = import.meta.env.VITE_IMAGE_PATH;
+
 
 const Banners = () => {
     const [allbanner, setAllBanner] = useState([]);
@@ -15,6 +15,7 @@ const Banners = () => {
     const [showEditForm, setShowEditForm] = useState(false);
     const [editingBanner, setEditingBanner] = useState(null);
     const [loading, setLoading] = useState(true);
+    const imgurl = import.meta.env.VITE_IMAGE_PATH;
     
     // Pagination state for MyTable
     const [currentPage, setCurrentPage] = useState(1);
@@ -24,9 +25,9 @@ const Banners = () => {
     const fetchBanner = async () => {
         try {
             setLoading(true);
-            console.log("Fetching banners...");
+            // console.log("Fetching banners...");
             const response = await axios.get(route("banner.index"));
-            console.log("API Response:", response.data);
+            // console.log("API Response:", response.data);
 
             let data = [];
             if (response.data && response.data.data) {
@@ -54,6 +55,8 @@ const Banners = () => {
     };
     fetchBanner();
 }, [reloadTrigger]);
+
+// console.log(allbanner);
 
     // Handle delete
     const handleDelete = async (id) => {
@@ -110,13 +113,15 @@ const Banners = () => {
             Cell: ({ value }) => (
                 <div className="flex items-center">
                     <img 
-                        src={value} 
+                        src={`${imgurl}/${value}`}
                         alt="Banner" 
                         className="w-16 h-16 object-cover rounded-lg shadow-sm"
                         onError={(e) => {
                             e.target.src = 'https://via.placeholder.com/64x64?text=No+Image';
                         }}
                     />
+                 
+
                 </div>
             ),
         },

@@ -19,6 +19,7 @@ const LeaderboardPlaceholder = () => (
     <span className="text-sm">Advertisement</span>
   </div>
 );
+const imgurl = import.meta.env.VITE_IMAGE_PATH;
 
 // ── Individual banner item ────────────────────────────────────────────────────
 const LeaderboardItem = ({ banner }) => (
@@ -29,7 +30,7 @@ const LeaderboardItem = ({ banner }) => (
     className="block w-full max-w-[898px] h-[90px] overflow-hidden transition-all duration-150 shadow-sm"
   >
     <img
-      src={banner.image}
+      src={`${imgurl}/${banner.image}`}
       alt={banner.alt_text || "विज्ञापन"}
       className="w-full h-full object-cover object-center block"
       loading="lazy"
@@ -46,6 +47,7 @@ const LeaderboardBanner = () => {
   const [banners, setBanners] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+    
 
   useEffect(() => {
     const fetchBanners = async () => {

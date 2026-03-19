@@ -1,15 +1,4 @@
-/**
- * SidebarBanner
- * ─────────────
- * Fetches Square and Rectangle banners from GET /api/banner and renders them
- * as stacked sidebar advertisement blocks with appropriate dimensions.
- * Square: 268px width, auto height
- * Rectangle: 268px width, fixed height for rectangular format
- *
- * Usage:
- *   import SidebarBanner from '@/Banners/SidebarBanner';
- *   <SidebarBanner />
- */
+
 
 import React, { useEffect, useState } from 'react';
 
@@ -25,7 +14,7 @@ const SidebarSkeleton = () => (
     ))}
   </>
 );
-
+const imgurl = import.meta.env.VITE_IMAGE_PATH;
 // ── Empty placeholder when no banners in DB ────────────────────────────────────
 const SidebarPlaceholder = ({ index }) => {
   // Alternate between square and rectangle placeholder heights
@@ -48,35 +37,23 @@ const SidebarPlaceholder = ({ index }) => {
 };
 
 // ── Single banner item with dynamic styling based on category ─────────────────
-const SidebarItem = ({ banner }) => {
-  // Apply different height for rectangle banners
-  const isRectangle = banner.category === 'Rectangle';
-  
-  return (
-    <a
-      href={banner.link || '#'}
-      target={banner.link ? '_blank' : '_self'}
-      rel="noopener noreferrer"
-      className="block w-full overflow-hidden
-                 border border-[rgba(0,0,0,0.08)]
-                 hover:border-[rgba(0,0,0,0.2)] hover:opacity-95
-                 transition-all duration-150"
-    >
-      <img
-        src={banner.image}
-        alt="विज्ञापन"
-        className="w-full block object-cover"
-        style={{ 
-          height: isRectangle ? '200px' : 'auto',
-          maxHeight: isRectangle ? '200px' : 'none'
-        }}
-        onError={(e) => {
-          e.currentTarget.closest('a').style.display = 'none';
-        }}
-      />
-    </a>
-  );
-};
+const SidebarItem = ({ banner }) => (
+  <a
+    href={banner.link || '#'}
+    target={banner.link ? '_blank' : '_self'}
+    rel="noopener noreferrer"
+    className="block w-full overflow-hidden border border-[rgba(0,0,0,0.08)]
+               hover:border-[rgba(0,0,0,0.2)] hover:opacity-95
+               transition-all duration-150"
+  >
+    <img
+      src={`${imgurl}/${banner.image}`}
+      alt="विज्ञापन"
+      className="w-full block object-cover"   // ← auto height, square fills naturally
+      onError={(e) => { e.currentTarget.closest('a').style.display = 'none'; }}
+    />
+  </a>
+);
 
 // ── Category section separator ───────────────────────────────────────────────
 const CategorySeparator = ({ category }) => (
@@ -94,10 +71,9 @@ const SidebarBanner = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Separate banners by category
+  // ── Only Square banners in the sidebar ──
   const squareBanners = banners.filter(b => b.category === 'Square');
-  const rectangleBanners = banners.filter(b => b.category === 'Rectangle');
-  const hasBanners = squareBanners.length > 0 || rectangleBanners.length > 0;
+  const hasBanners = squareBanners.length > 0;   // ← was checking both
 
   useEffect(() => {
     const fetchBanners = async () => {
@@ -118,9 +94,7 @@ const SidebarBanner = () => {
         
         if (json.success && Array.isArray(json.data)) {
           // Filter to only Square and Rectangle categories
-          const filteredBanners = json.data.filter(b => 
-            b.category === 'Square' || b.category === 'Rectangle'
-          );
+        const filteredBanners = json.data.filter(b => b.category === 'Square');  // ← remove Rectangle
           setBanners(filteredBanners);
         } else {
           setBanners([]);
@@ -138,34 +112,10 @@ const SidebarBanner = () => {
   }, []);
 
   // Function to render banner sections
-  const renderBannerSections = () => {
-    const sections = [];
-
-    // Rectangle banners section
-    if (rectangleBanners.length > 0) {
-      sections.push(
-        <React.Fragment key="rectangle-section">
-          <CategorySeparator category="Rectangle" />
-          {rectangleBanners.map(banner => (
-            <SidebarItem key={`rect-${banner.id}`} banner={banner} />
-          ))}
-        </React.Fragment>
-      );
-    }
-
-    // Square banners section
-    if (squareBanners.length > 0) {
-      sections.push(
-        <React.Fragment key="square-section">
-          <CategorySeparator category="Square" />
-          {squareBanners.map(banner => (
-            <SidebarItem key={`square-${banner.id}`} banner={banner} />
-          ))}
-        </React.Fragment>
-      );
-    }
-
-    return sections;
+ const renderBannerSections = () => {
+    return squareBanners.map(banner => (
+      <SidebarItem key={`square-${banner.id}`} banner={banner} />
+    ));
   };
 
   return (
