@@ -18,7 +18,6 @@ const CATEGORIES = [
 const USEFUL_LINKS = [
   { label: 'गृहपृष्ठ',          href: '/' },
   { label: 'हाम्रो टिम',        href: '/hamro-team' },
-  { label: 'गोपनीयता नीति',     href: '/' },
   { label: 'विज्ञापन सम्पर्क',  href: 'https://www.facebook.com/ShuchiKhabar' },
   { label: ' प्राइभेसी पोलिसी',    href: '/privacy-policy' },
 ];
@@ -77,7 +76,7 @@ const Footer = () => (
   <footer className="text-white" style={{ background: '#00649b' }}>
 
     {/* ── TOP: Categories strip ── */}
-    <div style={{ background: 'rgba(0,0,0,0.18)' }}>
+    {/* <div style={{ background: 'rgba(0,0,0,0.18)' }}>
       <div className="w-full mx-auto px-4 sm:px-6 lg:px-24 py-4">
         <div className="flex items-center gap-2.5 mb-3">
           <div className="w-[3px] h-5 bg-[#8B0000] rounded-sm flex-shrink-0" />
@@ -101,7 +100,7 @@ const Footer = () => (
           ))}
         </div>
       </div>
-    </div>
+    </div> */}
 
     {/* ── MIDDLE: 3-column info grid ── */}
     <div className="w-full mx-auto px-4 sm:px-6 lg:px-24 py-10 border-b border-white/15">
@@ -127,20 +126,20 @@ const Footer = () => (
           </p> */}
 
           {/* Address */}
-          <div className="mt-2 space-y-1">
+          {/* <div className="mt-2 space-y-1">
             <p className="text-[0.85rem] text-white/80">
               <span className="font-medium">ठेगाना:</span> चन्द्रागिरी नगरपालिका–११, काठमाडौं
             </p>
-          </div>
+          </div> */}
 
           {/* Registration Details */}
           <div className="mt-2 space-y-1">
             <p className="text-[0.85rem] text-white/80 font-medium">
               सूचना विभाग दर्ता नं.: २०७८/०७७-७८
             </p>
-            <p className="text-[0.85rem] text-white/80">
+            {/* <p className="text-[0.85rem] text-white/80">
               प्रकाशक: शुचि मिडिया एण्ड इभेन्ट प्रा. लि.
-            </p>
+            </p> */}
             <p className="text-[0.85rem] text-white/80">
               <span className="font-medium">सम्पादक:</span> प्रदीप ज्ञवाली
             </p>
@@ -194,14 +193,15 @@ const Footer = () => (
           <SectionHeading>सम्पर्क ठेगाना</SectionHeading>
 
           <p className="text-[0.84rem] text-white/65 leading-[1.8] mb-4">
-            शुचीखबर मिडिया प्रा.लि.<br />
-            काठमाडौं, नेपाल
+            शुचि मिडिया एण्ड इभेन्ट प्रा.लि.  <br />
+ चन्द्रागिरी नगरपालिका–११, काठमाडौं
+         
           </p>
 
           <div className="space-y-2.5">
             {/* Phone Number */}
             <a
-              href="tel:+9779851310487"
+              href="tel: +9779851310487"
               className="flex items-center gap-2.5 text-[0.84rem] text-white/70 hover:text-white transition-colors duration-150 group"
             >
               <span className="w-7 h-7 rounded-full border border-white/20 flex items-center justify-center flex-shrink-0 group-hover:border-white/50 transition-colors">
@@ -209,7 +209,8 @@ const Footer = () => (
                   <path d="M22 16.92v3a1.999 1.999 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.362 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.574 2.81.7A2 2 0 0 1 22 16.92z" />
                 </svg>
               </span>
-              +977 9851310487
+         
+               +9779851310487
             </a>
 
             {/* Email */}
@@ -223,7 +224,7 @@ const Footer = () => (
                   <polyline points="22,6 12,13 2,6" />
                 </svg>
               </span>
-              shuchikhabar@gmail.com
+     shuchikhabar@gmail.com
             </a>
 
             {/* Website */}

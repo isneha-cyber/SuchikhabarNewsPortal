@@ -15,13 +15,14 @@ const NAV_ITEMS = [
   { name: 'अन्तर्राष्ट्रिय', route: '/category/अन्तर्राष्ट्रिय' },
   { name: 'खेलकुद', route: '/category/खेलकुद' },
   { name: 'मनोरञ्जन', route: '/category/मनोरञ्जन' },
-  { name: 'कृषि', route: '/category/कृषि' },
+  
 ];
 
 const ANYA_DROPDOWN = [
   { name: 'स्वास्थ्य', route: '/category/स्वास्थ्य' },
   { name: 'धार्मिक', route: '/category/धार्मिक' },
   { name: 'विचार', route: '/category/विचार' },
+  { name: 'कृषि', route: '/category/कृषि' },
 ];
 
 const QUICK_NAV = NAV_ITEMS.slice(0, 5);
