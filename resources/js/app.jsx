@@ -6,7 +6,7 @@ import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
 import { createRoot } from 'react-dom/client';
 import ScrollToTop from '@/Components/ScrollToTop';
 
-const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
+const appName = import.meta.env.VITE_APP_NAME ;
 
 createInertiaApp({
     title: (title) => `${title} - शुचीखबर`,
