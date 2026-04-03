@@ -9,7 +9,7 @@ import ScrollToTop from '@/Components/ScrollToTop';
 const appName = import.meta.env.VITE_APP_NAME ;
 
 createInertiaApp({
-    title: (title) => `${title} - शुचीखबर`,
+    title: (title) => `${title} `,
     resolve: (name) =>
         resolvePageComponent(
             `./Pages/${name}.jsx`,

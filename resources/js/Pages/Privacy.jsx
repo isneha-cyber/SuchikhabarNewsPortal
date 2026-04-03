@@ -1,8 +1,24 @@
 import React from 'react';
-import { Link } from '@inertiajs/react';
+import { Link, Head } from '@inertiajs/react';
 import Navbar from '@/Suchikhabar/Navbar';
 import Footer from '@/Suchikhabar/Footer';
 
+// ─── SEO CONSTANTS ────────────────────────────────────────────────────────────
+const SEO_TITLE       = 'Privacy Policy | सूचीखबर'
+const SEO_DESCRIPTION = 'सूचीखबरको Privacy Policy पढ्नुहोस् — हामी तपाईंको व्यक्तिगत जानकारी कसरी सङ्कलन, प्रयोग र सुरक्षित गर्छौं भन्ने विवरण।'
+
+/**
+ * Returns the canonical URL for this static page.
+ * Always resolves to origin + /privacy-policy to prevent
+ * duplicate-content issues from query strings or trailing slashes.
+ * Update the path below if your Laravel route uses a different slug.
+ */
+const buildCanonicalUrl = () => {
+  if (typeof window === 'undefined') return ''
+  return window.location.origin + '/privacy-policy'
+}
+
+// ─── DEFINITIONS DATA ─────────────────────────────────────────────────────────
 const definitions = [
   {
     term: 'Account',
@@ -47,12 +63,26 @@ const definitions = [
   },
 ];
 
+// ─── PRIVACY PAGE ─────────────────────────────────────────────────────────────
 const Privacy = () => {
   return (
     <>
+      {/* ── SEO HEAD ─────────────────────────────────────────────────────── */}
+      <Head>
+        {/* Title shown in browser tab and Google search results */}
+        <title>{SEO_TITLE}</title>
+
+        {/* Meta description — plain-text summary used in search snippets */}
+        <meta name="description" content={SEO_DESCRIPTION} />
+
+        {/* Canonical — prevents duplicate-content penalties from query
+            strings or alternate URL formats hitting this page */}
+        <link rel="canonical" href={buildCanonicalUrl()} />
+      </Head>
+
+      {/* ── PAGE CONTENT ─────────────────────────────────────────────────── */}
       <Navbar />
 
-      {/* Removed fixed px-24 — it broke small screens */}
       <div className="bg-white min-h-screen">
 
         {/* ── Page Hero ── */}

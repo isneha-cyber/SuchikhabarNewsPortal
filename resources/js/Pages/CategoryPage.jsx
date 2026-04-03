@@ -22,6 +22,11 @@ const EyeIcon = () => (
   </svg>
 );
 
+
+
+
+
+
 // ─── PLACEHOLDER IMAGE ────────────────────────────────────────────────────────
 // Handles both missing src (null/undefined/"") and broken URLs (404/network error).
 // Drop-in replacement for <img> — accepts same className/style props.
@@ -255,6 +260,9 @@ const Pagination = ({ links, color }) => {
     </span>
   );
 
+
+  
+
   return (
     <div className="flex items-center justify-center gap-1 pt-4 pb-2 flex-wrap">
       {firstPage?.url && !firstPage?.active
@@ -314,9 +322,34 @@ const CategoryPage = ({ slug, category, news, moreNews }) => {
     return () => observer.disconnect();
   }, [stories.length]);
 
+
+  const siteUrl = "https://shuchikhabar.com"; // change to your domain
+
+const pageTitle = `${categoryName} | Shuchikhabar`;
+
+const metaDescription =
+  description ||
+  `${categoryName} सम्बन्धी ताजा समाचारहरू Shuchikhabar मा पढ्नुहोस्।`;
+
+const canonicalUrl = `${siteUrl}/category/${slug}`;
+
   return (
     <>
-      <Head title={`${categoryName} `} />
+<Head>
+  <title>{pageTitle}</title>
+
+  {/* Meta Description */}
+  <meta name="description" content={metaDescription} />
+
+  {/* Canonical URL */}
+  <link rel="canonical" href={canonicalUrl} />
+
+  {/* Optional but recommended */}
+  <meta property="og:title" content={pageTitle} />
+  <meta property="og:description" content={metaDescription} />
+  <meta property="og:url" content={canonicalUrl} />
+  <meta property="og:type" content="website" />
+</Head>
       <Navbar />
 
       <div className="bg-white min-h-screen">
